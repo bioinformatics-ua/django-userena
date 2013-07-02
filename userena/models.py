@@ -175,7 +175,7 @@ class UserenaSignup(models.Model):
         """
         Sends a activation email to the user.
 
-        This email is send when the user wants to activate their newly created
+        This email is sent_activation_email when the user wants to activate their newly created
         user.
 
         """
@@ -197,6 +197,91 @@ class UserenaSignup(models.Model):
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email, ])
 
+        #Send email to admins with the message that the new user is active
+        emaillist = ", ".join(item[1] for item in settings.ADMINS)
+        send_mail("Activation done",
+                  message,
+                  settings.DEFAULT_FROM_EMAIL,
+                  [emaillist])
+
+    def send_approval_email(self):
+        """
+        Sends an approval email to the user.
+
+        This email is sent when USERENA_MODERATE_REGISTRATION, after an admin
+        has approved the registration.
+
+        """
+        context= {'user': self.user,
+                  'protocol': get_protocol(),
+                  'site': Site.objects.get_current()}
+
+        subject = render_to_string('userena/emails/approval_email_subject.txt',
+                                   context)
+        subject = ''.join(subject.splitlines())
+
+        message = render_to_string('userena/emails/approval_email_message.txt',
+                                   context)
+        send_mail(subject,
+                  message,
+                  settings.DEFAULT_FROM_EMAIL,
+                  [self.user.email,])
+
+    def send_rejection_email(self):
+        """
+        Sends a rejection email to the user.
+
+        This email is sent when USERENA_MODERATE_REGISTRATION, after an admin
+        has rejected the registration.
+
+        """
+        context= {'user': self.user,
+                  'site': Site.objects.get_current()}
+
+        subject = render_to_string('userena/emails/rejection_email_subject.txt',
+                                   context)
+        subject = ''.join(subject.splitlines())
+
+        message = render_to_string('userena/emails/rejection_email_message.txt',
+                                   context)
+        send_mail(subject,
+                  message,
+                  settings.DEFAULT_FROM_EMAIL,
+                  [self.user.email,])
+
+    def send_pending_activation_email(self):
+        """
+        Sends a email to the user after signup.
+
+        This email is sent_pending_activation_email when the user created a new user.
+
+        """
+        context = {'user': self.user,
+                  'without_usernames': userena_settings.USERENA_WITHOUT_USERNAMES,
+                  'protocol': get_protocol(),
+                  'activation_days': userena_settings.USERENA_ACTIVATION_DAYS,
+                  'activation_key': self.activation_key,
+                  'site': Site.objects.get_current()}
+
+        subject = render_to_string('userena/emails/pending_activation_email_subject.txt',
+                                   context)
+        subject = ''.join(subject.splitlines())
+
+        message = render_to_string('userena/emails/pending_activation_email_message.txt',
+                                   context)
+        send_mail(subject,
+                  message,
+                  settings.DEFAULT_FROM_EMAIL,
+                  [self.user.email, ])
+
+        #Send email to admins with the link activation of new user
+        emaillist = ", ".join(item[1] for item in settings.ADMINS)
+        message = render_to_string('userena/emails/activation_email_message.txt',
+                                   context)
+        send_mail("Pending activation",
+                  message,
+                  settings.DEFAULT_FROM_EMAIL,
+                  [emaillist])
 
 class UserenaBaseProfile(models.Model):
     """ Base model needed for extra profile functionality """

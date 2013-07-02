@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models import Q
-from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import UserManager, Permission, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext as _
@@ -31,7 +30,7 @@ class UserenaManager(UserManager):
     """ Extra functionality for the Userena model. """
 
     def create_user(self, username, email, password, active=False,
-                    send_email=True):
+                    send_email=True, pending_activation=False):
         """
         A simple wrapper that creates a new :class:`User`.
 
@@ -82,7 +81,10 @@ class UserenaManager(UserManager):
             assign(perm[0], new_user, new_user)
 
         if send_email:
-            userena_profile.send_activation_email()
+            if pending_activation:
+                userena_profile.send_pending_activation_email()
+            else:
+                userena_profile.send_activation_email()
 
         return new_user
 
@@ -103,30 +105,6 @@ class UserenaManager(UserManager):
         return self.create(user=user,
                            activation_key=activation_key)
 
-    def reissue_activation(self, activation_key):
-        """
-        Creates a new ``activation_key`` resetting activation timeframe when
-        users let the previous key expire.
-
-        :param activation_key:
-            String containing the secret SHA1 activation key.
-
-        """
-        try:
-            userena = self.get(activation_key=activation_key)
-        except self.model.DoesNotExist:
-            return False
-        try:
-            salt, new_activation_key = generate_sha1(userena.user.username)
-            userena.activation_key = new_activation_key
-            userena.save(using=self._db)
-            userena.user.date_joined = get_datetime_now()
-            userena.user.save(using=self._db)
-            userena.send_activation_email()
-            return True
-        except Exception,e:
-            return False
-
     def activate_user(self, activation_key):
         """
         Activate an :class:`User` by supplying a valid ``activation_key``.
@@ -141,15 +119,21 @@ class UserenaManager(UserManager):
             The newly activated :class:`User` or ``False`` if not successful.
 
         """
+
         if SHA1_RE.search(activation_key):
             try:
                 userena = self.get(activation_key=activation_key)
             except self.model.DoesNotExist:
                 return False
             if not userena.activation_key_expired():
-                userena.activation_key = userena_settings.USERENA_ACTIVATED
+                if userena_settings.USERENA_MODERATE_REGISTRATION:
+                    key = userena_settings.USERENA_PENDING_MODERATION
+                    is_active = True
+                else:
+                    key = userena_settings.USERENA_ACTIVATED
+                    is_active = True
                 user = userena.user
-                user.is_active = True
+                user.is_active = is_active
                 userena.save(using=self._db)
                 user.save(using=self._db)
 
@@ -159,25 +143,6 @@ class UserenaManager(UserManager):
 
                 return user
         return False
-
-    def check_expired_activation(self, activation_key):
-        """
-        Check if ``activation_key`` is still valid.
-
-        Raises a ``self.model.DoesNotExist`` exception if key is not present or
-         ``activation_key`` is not a valid string
-
-        :param activation_key:
-            String containing the secret SHA1 for a valid activation.
-
-        :return:
-            True if the ket has expired, False if still valid.
-
-        """
-        if SHA1_RE.search(activation_key):
-            userena = self.get(activation_key=activation_key)
-            return userena.activation_key_expired()
-        raise self.model.DoesNotExist
 
     def confirm_email(self, confirmation_key):
         """
@@ -250,9 +215,7 @@ class UserenaManager(UserManager):
             if model == 'profile':
                 model_obj = get_profile_model()
             else: model_obj = get_user_model()
-
             model_content_type = ContentType.objects.get_for_model(model_obj)
-
             for perm in perms:
                 try:
                     Permission.objects.get(codename=perm[0],
@@ -268,7 +231,7 @@ class UserenaManager(UserManager):
         for user in get_user_model().objects.exclude(id=settings.ANONYMOUS_USER_ID):
             try:
                 user_profile = user.get_profile()
-            except ObjectDoesNotExist:
+            except get_profile_model().DoesNotExist:
                 warnings.append(_("No profile found for %(username)s") \
                                     % {'username': user.username})
             else:

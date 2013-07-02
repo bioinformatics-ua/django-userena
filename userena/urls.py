@@ -44,6 +44,7 @@ urlpatterns = patterns('',
                           'userena_activation_days': userena_settings.USERENA_ACTIVATION_DAYS}},
        name='userena_signup_complete'),
 
+
     # Activate
     url(r'^activate/(?P<activation_key>\w+)/$',
        userena_views.activate,
