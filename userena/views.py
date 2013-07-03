@@ -133,11 +133,10 @@ def signup(request, signup_form=SignupForm,
                 messages.success(request, _('Your account has been activated, but is pending admin approval.'),
                                  fail_silently=True)
 
-            if success_url:
+            if success_url and not userena_settings.USERENA_MODERATE_REGISTRATION:
                 redirect_to = success_url
             else:
-                redirect_to = reverse('userena_signup_complete',
-                                      kwargs={'username': user.username})
+                redirect_to = reverse('userena_signup_complete')
 
             if user and not userena_settings.USERENA_MODERATE_REGISTRATION:
                 # A new signed user should logout the old one.
@@ -155,6 +154,8 @@ def signup(request, signup_form=SignupForm,
     extra_context['form'] = form
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
+
+
 
 @secure_required
 def activate(request, activation_key,

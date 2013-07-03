@@ -37,12 +37,12 @@ urlpatterns = patterns('',
        {'template_name': 'userena/password_reset_complete.html'}),
 
     # Signup
-    url(r'^(?P<username>[\.\w-]+)/signup/complete/$',
-       userena_views.direct_to_user_template,
-       {'template_name': 'userena/signup_complete.html',
-        'extra_context': {'userena_activation_required': userena_settings.USERENA_ACTIVATION_REQUIRED,
-                          'userena_activation_days': userena_settings.USERENA_ACTIVATION_DAYS}},
-       name='userena_signup_complete'),
+    # url(r'^(?P<username>[\.\w-]+)/signup/complete/$',
+    #    userena_views.direct_to_user_template,
+    #    {'template_name': 'userena/signup_complete.html',
+    #     'extra_context': {'userena_activation_required': userena_settings.USERENA_ACTIVATION_REQUIRED,
+    #                       'userena_activation_days': userena_settings.USERENA_ACTIVATION_DAYS}},
+    #    name='userena_signup_complete'),
 
 
     # Activate
@@ -50,10 +50,6 @@ urlpatterns = patterns('',
        userena_views.activate,
        name='userena_activate'),
 
-    # Retry activation
-    url(r'^activate/retry/(?P<activation_key>\w+)/$',
-        userena_views.activate_retry,
-        name='userena_activate_retry'),
 
     # Change email and confirm it
     url(r'^(?P<username>[\.\w-]+)/email/$',
