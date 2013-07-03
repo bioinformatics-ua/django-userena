@@ -193,15 +193,15 @@ def activate(request, activation_key,
     """
 
     user = UserenaSignup.objects.activate_user(activation_key)
-    if (user and userena_settings.USERENA_MODERATE_REGISTRATION
-        and userena_settings.USERENA_USE_MESSAGES):
-        messages.success(request, _('Your account has been activated and approved by admin.'),
-                         fail_silently=True)
+    if user and userena_settings.USERENA_MODERATE_REGISTRATION:
+        if userena_settings.USERENA_USE_MESSAGES:
+            messages.success(request, _('Your account has been activated and approved by admin.'),
+                             fail_silently=True)
 
         user.userena_signup.send_approval_email()
 
-        return redirect(reverse('userena_signin'))
-    elif user:
+        return redirect(reverse('userena_activated'))
+    elif user and settings.USERENA_SIGNIN_AFTER_SIGNUP:
         # Sign the user in.
         auth_user = authenticate(identification=user.email,
                                  check_password=False)

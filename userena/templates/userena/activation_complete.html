@@ -1,0 +1,12 @@
+{% extends 'userena/base_userena.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Activation complete!" %}{% endblock %}
+
+{% block content_title %}<h2>{% trans "Activation" %}</h2>{% endblock %}
+
+{% block content %}
+<p>{% trans "Activation complete an email sent" %}</p>
+
+<p>{% blocktrans %}User can now use the supplied credentials to signin.{% endblocktrans %}</p>
+{% endblock %}
