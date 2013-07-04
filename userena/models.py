@@ -199,7 +199,7 @@ class UserenaSignup(models.Model):
 
         #Send email to admins with the message that the new user is active
         emaillist = ", ".join(item[1] for item in settings.ADMINS)
-        send_mail("Activation done",
+        send_mail("EMIF Catalogue - Activation done",
                   message,
                   settings.DEFAULT_FROM_EMAIL,
                   [emaillist])
@@ -278,7 +278,7 @@ class UserenaSignup(models.Model):
         emaillist = ", ".join(item[1] for item in settings.ADMINS)
         message = render_to_string('userena/emails/activation_email_message.txt',
                                    context)
-        send_mail("Pending activation",
+        send_mail("EMIF Catalogue - Pending activation",
                   message,
                   settings.DEFAULT_FROM_EMAIL,
                   [emaillist])
