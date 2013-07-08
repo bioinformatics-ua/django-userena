@@ -276,7 +276,7 @@ class UserenaSignup(models.Model):
 
         #Send email to admins with the link activation of new user
         emaillist = ", ".join(item[1] for item in settings.ADMINS)
-        message = render_to_string('userena/emails/activation_email_message.txt',
+        message = render_to_string('userena/emails/admin_activation_email_message.txt',
                                    context)
         send_mail("EMIF Catalogue - Pending activation",
                   message,
