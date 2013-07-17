@@ -125,21 +125,22 @@ class UserenaManager(UserManager):
                 userena = self.get(activation_key=activation_key)
             except self.model.DoesNotExist:
                 return False
-            if not userena.activation_key_expired():
-                if userena_settings.USERENA_MODERATE_REGISTRATION:
-                    key = userena_settings.USERENA_PENDING_MODERATION
-                    is_active = True
-                else:
-                    key = userena_settings.USERENA_ACTIVATED
-                    is_active = True
-                user = userena.user
-                user.is_active = is_active
-                userena.save(using=self._db)
-                user.save(using=self._db)
+            if not userena.user.is_active:
+                if not userena.activation_key_expired():
+                    if userena_settings.USERENA_MODERATE_REGISTRATION:
+                        key = userena_settings.USERENA_PENDING_MODERATION
+                        is_active = True
+                    else:
+                        key = userena_settings.USERENA_ACTIVATED
+                        is_active = True
+                    user = userena.user
+                    user.is_active = is_active
+                    userena.save(using=self._db)
+                    user.save(using=self._db)
 
-                # Send the activation_complete signal
-                userena_signals.activation_complete.send(sender=None,
-                                                         user=user)
+                    # Send the activation_complete signal
+                    userena_signals.activation_complete.send(sender=None,
+                                                             user=user)
 
                 return user
         return False
