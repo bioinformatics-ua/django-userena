@@ -198,11 +198,13 @@ class UserenaSignup(models.Model):
                   [self.user.email, ])
 
         #Send email to admins with the message that the new user is active
-        emaillist = ", ".join(item[1] for item in settings.ADMINS)
+        emaillist = []
+        for k,v in settings.ADMINS:
+            emaillist.append(v)
         send_mail("EMIF Catalogue - Activation done",
                   message,
                   settings.DEFAULT_FROM_EMAIL,
-                  [emaillist])
+                  emaillist)
 
     def send_approval_email(self):
         """
