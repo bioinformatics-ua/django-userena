@@ -29,8 +29,8 @@ ASSIGNED_PERMISSIONS = {
 class UserenaManager(UserManager):
     """ Extra functionality for the Userena model. """
 
-    def create_user(self, username, email, password, active=False,
-                    send_email=True, pending_activation=False):
+    def create_user(self, username, email,  password, active=False,
+                    send_email=True, pending_activation=False, first_name="", last_name="", organization = ""):
         """
         A simple wrapper that creates a new :class:`User`.
 
@@ -60,6 +60,8 @@ class UserenaManager(UserManager):
         new_user = get_user_model().objects.create_user(
             username, email, password)
         new_user.is_active = active
+        new_user.first_name = first_name
+        new_user.last_name = last_name
         new_user.save()
 
         userena_profile = self.create_userena_profile(new_user)
@@ -68,6 +70,7 @@ class UserenaManager(UserManager):
         profile_model = get_profile_model()
         try:
             new_profile = new_user.get_profile()
+
         except profile_model.DoesNotExist:
             new_profile = profile_model(user=new_user)
             new_profile.save(using=self._db)
@@ -82,7 +85,7 @@ class UserenaManager(UserManager):
 
         if send_email:
             if pending_activation:
-                userena_profile.send_pending_activation_email()
+                userena_profile.send_pending_activation_email(organization=organization)
             else:
                 userena_profile.send_activation_email()
 

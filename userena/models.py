@@ -251,7 +251,7 @@ class UserenaSignup(models.Model):
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email,])
 
-    def send_pending_activation_email(self):
+    def send_pending_activation_email(self, organization=""):
         """
         Sends a email to the user after signup.
 
@@ -260,6 +260,7 @@ class UserenaSignup(models.Model):
         """
         context = {'user': self.user,
                   'without_usernames': userena_settings.USERENA_WITHOUT_USERNAMES,
+                  'organization': organization,
                   'protocol': get_protocol(),
                   'activation_days': userena_settings.USERENA_ACTIVATION_DAYS,
                   'activation_key': self.activation_key,

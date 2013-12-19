@@ -84,13 +84,25 @@ class SignupForm(forms.Form):
         username, email, password = (self.cleaned_data['username'],
                                      self.cleaned_data['email'],
                                      self.cleaned_data['password1'])
+        print self.cleaned_data
+        try:
+            # First name and last name
+            first_name, last_name = (self.cleaned_data['first_name'], self.cleaned_data['last_name'])
+            # Organization 
+            organization = self.cleaned_data['organization']
+        except: 
+            print "Error Keys at register user"
+
 
         new_user = UserenaSignup.objects.create_user(username,
                                                      email,
                                                      password,
                                                      not userena_settings.USERENA_ACTIVATION_REQUIRED,
                                                      userena_settings.USERENA_ACTIVATION_REQUIRED,
-                                                     userena_settings.USERENA_MODERATE_REGISTRATION)
+                                                     userena_settings.USERENA_MODERATE_REGISTRATION,
+                                                     first_name=first_name,
+                                                     last_name=last_name,
+                                                     organization=organization)
         return new_user
 
 class SignupFormOnlyEmail(SignupForm):
