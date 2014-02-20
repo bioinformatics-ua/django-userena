@@ -152,6 +152,7 @@ def signup(request, signup_form=SignupForm,
 
     if not extra_context: extra_context = dict()
     extra_context['form'] = form
+    extra_context['request'] = request
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -217,7 +218,10 @@ def activate(request, activation_key,
                                   kwargs={'username': user.username})
         return redirect(redirect_to)
     else:
-        if not extra_context: extra_context = dict()
+        if not extra_context: 
+            extra_context = dict()
+            extra_context['request'] = request
+            
         return ExtraContextTemplateView.as_view(template_name=template_name,
                                                 extra_context=extra_context)(request)
 
@@ -267,7 +271,10 @@ def email_confirm(request, confirmation_key,
                                   kwargs={'username': user.username})
         return redirect(redirect_to)
     else:
-        if not extra_context: extra_context = dict()
+        if not extra_context: 
+            extra_context = dict()
+            extra_context['request'] = request
+
         return ExtraContextTemplateView.as_view(template_name=template_name,
                                                 extra_context=extra_context)(request)
 
@@ -307,6 +314,7 @@ def direct_to_user_template(request, username, template_name,
     if not extra_context: extra_context = dict()
     extra_context['viewed_user'] = user
     extra_context['profile'] = user.get_profile()
+    extra_context['request'] = request
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -389,7 +397,9 @@ def signin(request, auth_form=AuthenticationForm,
     extra_context.update({
         'form': form,
         'next': request.REQUEST.get(redirect_field_name),
+        'request': request
     })
+        
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -481,6 +491,7 @@ def email_change(request, username, email_form=ChangeEmailForm,
     if not extra_context: extra_context = dict()
     extra_context['form'] = form
     extra_context['profile'] = user.get_profile()
+    extra_context['request'] = request
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -549,6 +560,7 @@ def password_change(request, username, template_name='userena/password_form.html
     if not extra_context: extra_context = dict()
     extra_context['form'] = form
     extra_context['profile'] = user.get_profile()
+    extra_context['request'] = request
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -629,6 +641,7 @@ def profile_edit(request, username, edit_profile_form=EditProfileForm,
     if not extra_context: extra_context = dict()
     extra_context['form'] = form
     extra_context['profile'] = profile
+    extra_context['request'] = request
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -670,6 +683,8 @@ def profile_detail(request, username,
     if not extra_context: extra_context = dict()
     extra_context['profile'] = user.get_profile()
     extra_context['hide_email'] = userena_settings.USERENA_HIDE_EMAIL
+    extra_context['request'] = request
+    
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -729,7 +744,10 @@ def profile_list(request, page=1, template_name='userena/profile_list.html',
     profile_model = get_profile_model()
     queryset = profile_model.objects.get_visible_profiles(request.user)
 
-    if not extra_context: extra_context = dict()
+    if not extra_context: 
+        extra_context = dict()
+        extra_context['request'] = request
+
     return ProfileListView.as_view(queryset=queryset,
                                    paginate_by=paginate_by,
                                    page=page,
