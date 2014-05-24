@@ -260,8 +260,17 @@ class UserenaSignup(models.Model):
 
         message = render_to_string('userena/emails/approval_email_message.txt',
                                    context)
+
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_html = render_to_string('userena/emails/approval_email_message.html',
+                                                context)
+        else:
+            message_html = None
+
+
         send_mail(subject,
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email,])
 
@@ -282,8 +291,16 @@ class UserenaSignup(models.Model):
 
         message = render_to_string('userena/emails/rejection_email_message.txt',
                                    context)
+
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_html = render_to_string('userena/emails/rejection_email_message.html',
+                                                context)
+        else:
+            message_html = None
+
         send_mail(subject,
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email,])
 
@@ -308,8 +325,16 @@ class UserenaSignup(models.Model):
 
         message = render_to_string('userena/emails/pending_activation_email_message.txt',
                                    context)
-        send_mail(subject,
+
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_html = render_to_string('userena/emails/pending_activation_email_message.html',
+                                                context)
+        else:
+            message_html = None
+
+        send_mail(subject,                 
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email, ])
 
@@ -319,8 +344,13 @@ class UserenaSignup(models.Model):
             emaillist.append(v)
         message = render_to_string('userena/emails/admin_activation_email_message.txt',
                                    context)
+        if userena_settings.USERENA_HTML_EMAIL:
+          message_html = render_to_string('userena/emails/admin_activation_email_message.html',
+                                   context)
+
         send_mail("EMIF Catalogue - Pending activation",
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   emaillist)
 

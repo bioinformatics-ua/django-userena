@@ -46,6 +46,9 @@ class UserenaAdmin(UserAdmin, GuardedModelAdmin):
     inlines = [UserenaSignupInline, ]
     list_display = ('username', 'email', 'first_name', 'last_name',
                     'is_staff', 'is_active', 'date_joined')
+
+    actions = [activate_registration, reject_registration]
+    
     list_filter = ('is_staff', 'is_superuser', 'is_active')
 
 
@@ -57,5 +60,10 @@ if userena_settings.USERENA_REGISTER_USER:
     
     admin.site.register(get_user_model(), UserenaAdmin)
     
+#admin.site.unregister(User)
+#admin.site.register(User, UserenaAdmin)
+#admin.site.register(get_profile_model())
+
 if userena_settings.USERENA_REGISTER_PROFILE:    
     admin.site.register(get_profile_model(), GuardedModelAdmin)
+
