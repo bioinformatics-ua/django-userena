@@ -11,6 +11,16 @@ from userena import settings as userena_settings
 
 import urllib, random, datetime
 
+try:
+    from django.utils.text import truncate_words
+except ImportError:
+    # Django >=1.5
+    from django.utils.text import Truncator
+    from django.utils.functional import allow_lazy
+    def truncate_words(s, num, end_text='...'):
+        truncate = end_text and ' %s' % end_text or ''
+        return Truncator(s).words(num, truncate=truncate)
+    truncate_words = allow_lazy(truncate_words, unicode)
 
 def get_gravatar(email, size=80, default='identicon'):
     """ Get's a Gravatar for a email address.
@@ -46,7 +56,7 @@ def get_gravatar(email, size=80, default='identicon'):
     """
     if userena_settings.USERENA_MUGSHOT_GRAVATAR_SECURE:
         base_url = 'https://secure.gravatar.com/avatar/'
-    else: base_url = 'http://www.gravatar.com/avatar/'
+    else: base_url = '//www.gravatar.com/avatar/'
 
     gravatar_url = '%(base_url)s%(gravatar_id)s?' % \
             {'base_url': base_url,
@@ -96,9 +106,13 @@ def generate_sha1(string, salt=None):
     :return: Tuple containing the salt and hash.
 
     """
+    if not isinstance(string, (str, unicode)):
+        string = str(string)
+    if isinstance(string, unicode):
+        string = string.encode("utf-8")
     if not salt:
         salt = sha_constructor(str(random.random())).hexdigest()[:5]
-    hash = sha_constructor(salt+str(string)).hexdigest()
+    hash = sha_constructor(salt+string).hexdigest()
 
     return (salt, hash)
 
@@ -114,7 +128,7 @@ def get_profile_model():
            (not settings.AUTH_PROFILE_MODULE):
         raise SiteProfileNotAvailable
 
-    profile_mod = get_model(*settings.AUTH_PROFILE_MODULE.split('.'))
+    profile_mod = get_model(*settings.AUTH_PROFILE_MODULE.rsplit('.',1))
     if profile_mod is None:
         raise SiteProfileNotAvailable
     return profile_mod

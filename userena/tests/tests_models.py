@@ -2,10 +2,10 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.conf import settings
+from django.test import TestCase
 
 from userena.models import UserenaSignup, upload_to_mugshot
 from userena import settings as userena_settings
-from userena.tests.profiles.test import ProfileTestCase
 from userena.tests.profiles.models import Profile
 from userena.utils import get_user_model
 
@@ -15,7 +15,7 @@ User = get_user_model()
 
 MUGSHOT_RE = re.compile('^[a-f0-9]{40}$')
 
-class UserenaSignupModelTests(ProfileTestCase):
+class UserenaSignupModelTests(TestCase):
     """ Test the model of UserenaSignup """
     user_info = {'username': 'alice',
                  'password': 'swordfish',
@@ -100,8 +100,59 @@ class UserenaSignupModelTests(ProfileTestCase):
         self.failUnlessEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.user_info['email']])
 
+    def test_plain_email(self):
+        """
+        If HTML emails are disabled, check that outgoing emails are not multipart
+        """
+        userena_settings.USERENA_HTML_EMAIL = False
+        new_user = UserenaSignup.objects.create_user(**self.user_info)
+        self.failUnlessEqual(len(mail.outbox), 1)
+        self.assertEqual(unicode(mail.outbox[0].message()).find("multipart/alternative"),-1)
 
-class BaseProfileModelTest(ProfileTestCase):
+    def test_html_email(self):
+        """
+        If HTML emails are enabled, check outgoings emails are multipart and
+        that different html and plain text templates are used
+        """
+        userena_settings.USERENA_HTML_EMAIL = True
+        userena_settings.USERENA_USE_PLAIN_TEMPLATE = True
+
+        new_user = UserenaSignup.objects.create_user(**self.user_info)
+
+        # Reset configuration
+        userena_settings.USERENA_HTML_EMAIL = False
+        self.failUnlessEqual(len(mail.outbox), 1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("multipart/alternative")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("text/plain")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("text/html")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("<html>")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("<p>Thank you for signing up")>-1)
+        self.assertFalse(mail.outbox[0].body.find("<p>Thank you for signing up")>-1)
+
+    def test_generated_plain_email(self):
+        """
+        If HTML emails are enabled and plain text template are disabled,
+        check outgoings emails are multipart and that plain text is generated
+        from html body
+        """
+        userena_settings.USERENA_HTML_EMAIL = True
+        userena_settings.USERENA_USE_PLAIN_TEMPLATE = False
+
+        new_user = UserenaSignup.objects.create_user(**self.user_info)
+
+        # Reset configuration
+        userena_settings.USERENA_HTML_EMAIL = False
+        userena_settings.USERENA_USE_PLAIN_TEMPLATE = True
+
+        self.failUnlessEqual(len(mail.outbox), 1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("multipart/alternative")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("text/plain")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("text/html")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("<html>")>-1)
+        self.assertTrue(unicode(mail.outbox[0].message()).find("<p>Thank you for signing up")>-1)
+        self.assertTrue(mail.outbox[0].body.find("Thank you for signing up")>-1)
+
+class BaseProfileModelTest(TestCase):
     """ Test the ``BaseProfile`` model """
     fixtures = ['users', 'profiles']
 
@@ -146,7 +197,7 @@ class BaseProfileModelTest(ProfileTestCase):
         Test if the correct mugshot is returned when the user makes use of gravatar.
 
         """
-        template = 'http://www.gravatar.com/avatar/%(hash)s?s=%(size)s&d=%(default)s'
+        template = '//www.gravatar.com/avatar/%(hash)s?s=%(size)s&d=%(default)s'
         profile = Profile.objects.get(pk=1)
 
         gravatar_hash = hashlib.md5(profile.user.email).hexdigest()

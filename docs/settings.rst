@@ -62,13 +62,6 @@ Default: ``2`` (integer)
 The amount of days, before the expiration of an account, that a notification
 get's send out. Warning the user of his coming demise.
 
-USERENA_ACTIVATION_REJECTED
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Default: ``ACTIVATION_REJECTED`` (string)
-
-String that defines the value that the ``activation_key`` will be set to after
-an admin rejects a user's registration via the admin panel.
-
 USERENA_ACTIVATED
 ~~~~~~~~~~~~~~~~~
 Default: ``ALREADY_ACTIVATED`` (string)
@@ -199,7 +192,7 @@ Template to use for rendering user profiles. This allows you to specify a
 template in your own project which extends ``userena/profile_detail.html``.
 
 USERENA_PROFILE_LIST_TEMPLATE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Default: ``userena/profile_list.html`` (string)
 
 Template to use for rendering users list. This allows you to specify a
@@ -211,6 +204,13 @@ Default: ``False`` (boolean)
 
 Boolean value that defines if the ``profile_list`` view is enabled within the
 project. If so, users can view a list of different profiles.
+
+USERENA_DISABLE_SIGNUP
+~~~~~~~~~~~~~~~~~~~~~~
+Default: ``False`` (boolean)
+
+Boolean value that defines if signups are disabled within the project. If so,
+users trying to sign up will be denied.
 
 USERENA_USE_MESSAGES
 ~~~~~~~~~~~~~~~~~~~~
@@ -240,16 +240,39 @@ Default: ``False`` (boolean)
 
 Prevents email addresses from being displayed to other users if set to ``True``.
 
-USERENA_MODERATE_REGISTRATION
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+USERENA_HTML_EMAIL
+~~~~~~~~~~~~~~~~~~
 Default: ``False`` (boolean)
 
-Defines whether or not to moderate new registrations.  If enabled, the site
-administrator must login to the django admin (or custom admin panel) and
-approve registrations before a user can login to the site.
+If ``True`` multipart emails are generated using html templates.
 
-Note: This setting is overridden by USERENA_ACTIVATION_REQUIRED.  If
-activation is not required, then neither is moderation.
+USERENA_USE_PLAIN_TEMPLATE
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Default: ``True`` (boolean)
+
+Uses a text template for plain text part (when ``USERENA_HTML_EMAIL = True``).
+When ``USERENA_HTML_EMAIL = False``, plain text templates are always used for
+emails even if ``USERENA_USE_PLAIN_TEMPLATE = False``.
+
+USERENA_REGISTER_PROFILE
+~~~~~~~~~~~~~~~~~~~~~~~~
+Default: ``True`` (boolean)
+
+If ``True`` userena will register the profile model with Django Admin for you. 
+It uses a GuardedModelAdmin when registering. This allows per user object permissions
+to be set via the admin.
+If ``False`` you will have to regiter the profile with the Django Admin yourself.
+
+USERENA_REGISTER_USER
+~~~~~~~~~~~~~~~~~~~~~
+Default: ``True`` (boolean)
+
+If ``True`` userena will first unregister the user model with the admin and 
+then reregister the user model using a GuardedModelAdmin. This allows you to 
+set per user object permissons.
+If ``False`` and you want to you set per user object permissions on the user model 
+via the admin you will have to unregister and reregiter the user model with the
+Django Admin yourself.
 
 
 Django settings
