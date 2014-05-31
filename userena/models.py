@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.mail import send_mail
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
@@ -13,6 +12,7 @@ from userena.managers import UserenaManager, UserenaBaseProfileManager
 from userena.utils import get_gravatar, generate_sha1, get_protocol, \
     get_datetime_now, get_user_model, user_model_label
 import datetime
+from .mail import send_mail
 
 
 PROFILE_PERMISSIONS = (
@@ -130,11 +130,23 @@ class UserenaSignup(models.Model):
                                        context)
         subject_old = ''.join(subject_old.splitlines())
 
-        message_old = render_to_string('userena/emails/confirmation_email_message_old.txt',
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_old_html = render_to_string('userena/emails/confirmation_email_message_old.html',
+                                                context)
+        else:
+            message_old_html = None
+
+        if (not userena_settings.USERENA_HTML_EMAIL or not message_old_html or
+            userena_settings.USERENA_USE_PLAIN_TEMPLATE):
+            message_old = render_to_string('userena/emails/confirmation_email_message_old.txt',
                                        context)
+        else:
+            message_old = None
+
         if self.user.email:
             send_mail(subject_old,
                       message_old,
+                      message_old_html,
                       settings.DEFAULT_FROM_EMAIL,
                     [self.user.email])
 
@@ -143,11 +155,22 @@ class UserenaSignup(models.Model):
                                        context)
         subject_new = ''.join(subject_new.splitlines())
 
-        message_new = render_to_string('userena/emails/confirmation_email_message_new.txt',
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_new_html = render_to_string('userena/emails/confirmation_email_message_new.html',
+                                                context)
+        else:
+            message_new_html = None
+
+        if (not userena_settings.USERENA_HTML_EMAIL or not message_new_html or
+            userena_settings.USERENA_USE_PLAIN_TEMPLATE):
+            message_new = render_to_string('userena/emails/confirmation_email_message_new.txt',
                                        context)
+        else:
+            message_new = None
 
         send_mail(subject_new,
                   message_new,
+                  message_new_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.email_unconfirmed, ])
 
@@ -190,10 +213,23 @@ class UserenaSignup(models.Model):
                                    context)
         subject = ''.join(subject.splitlines())
 
-        message = render_to_string('userena/emails/activation_email_message.txt',
+
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_html = render_to_string('userena/emails/activation_email_message.html',
+                                            context)
+        else:
+            message_html = None
+
+        if (not userena_settings.USERENA_HTML_EMAIL or not message_html or
+            userena_settings.USERENA_USE_PLAIN_TEMPLATE):
+            message = render_to_string('userena/emails/activation_email_message.txt',
                                    context)
+        else:
+            message = None
+
         send_mail(subject,
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email, ])
 
@@ -224,8 +260,17 @@ class UserenaSignup(models.Model):
 
         message = render_to_string('userena/emails/approval_email_message.txt',
                                    context)
+
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_html = render_to_string('userena/emails/approval_email_message.html',
+                                                context)
+        else:
+            message_html = None
+
+
         send_mail(subject,
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email,])
 
@@ -246,8 +291,16 @@ class UserenaSignup(models.Model):
 
         message = render_to_string('userena/emails/rejection_email_message.txt',
                                    context)
+
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_html = render_to_string('userena/emails/rejection_email_message.html',
+                                                context)
+        else:
+            message_html = None
+
         send_mail(subject,
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email,])
 
@@ -272,8 +325,16 @@ class UserenaSignup(models.Model):
 
         message = render_to_string('userena/emails/pending_activation_email_message.txt',
                                    context)
-        send_mail(subject,
+
+        if userena_settings.USERENA_HTML_EMAIL:
+            message_html = render_to_string('userena/emails/pending_activation_email_message.html',
+                                                context)
+        else:
+            message_html = None
+
+        send_mail(subject,                 
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email, ])
 
@@ -283,8 +344,13 @@ class UserenaSignup(models.Model):
             emaillist.append(v)
         message = render_to_string('userena/emails/admin_activation_email_message.txt',
                                    context)
+        if userena_settings.USERENA_HTML_EMAIL:
+          message_html = render_to_string('userena/emails/admin_activation_email_message.html',
+                                   context)
+
         send_mail("EMIF Catalogue - Pending activation",
                   message,
+                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   emaillist)
 
@@ -313,6 +379,7 @@ class UserenaBaseProfile(models.Model):
                                help_text=_('Designates who can view your profile.'))
 
     objects = UserenaBaseProfileManager()
+
 
     class Meta:
         """
@@ -457,7 +524,8 @@ class UserenaLanguageBaseProfile(UserenaBaseProfile):
     language = models.CharField(_('language'),
                                 max_length=5,
                                 choices=settings.LANGUAGES,
-                                default=settings.LANGUAGE_CODE[:2])
+                                default=settings.LANGUAGE_CODE[:2],
+                                help_text=_('Default language.'))
 
     class Meta:
         abstract = True

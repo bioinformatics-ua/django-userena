@@ -87,7 +87,7 @@ your project. This means modifying ``AUTHENTICATION_BACKENDS``,
 Begin by adding ``userena``, ``guardian`` and ``easy_thumbnails`` to the
 ``INSTALLED_APPS`` in your settings.py file of your project.
 
-Next add :class:``UserenaAuthenticationBackend`` and :class:``ObjectPermissionBackend`` 
+Next add ``UserenaAuthenticationBackend`` and ``ObjectPermissionBackend`` 
 also in your settings.py file, from django-guardian, at the top of ``AUTHENTICATION_BACKENDS``. 
 If you only have Django's default backend, adding django-guardian and that of userena will get
 the following:
@@ -128,10 +128,10 @@ To use GMail SMTP, you may use the following code in your settings.py:
 .. code-block:: python
 
     EMAIL_USE_TLS = True
-    EMAIL_HOST = ‘smtp.gmail.com’
+    EMAIL_HOST = 'smtp.gmail.com'
     EMAIL_PORT = 587
-    EMAIL_HOST_USER = ‘yourgmailaccount@gmail.com’
-    EMAIL_HOST_PASSWORD = ‘yourgmailpassword’
+    EMAIL_HOST_USER = 'yourgmailaccount@gmail.com'
+    EMAIL_HOST_PASSWORD = 'yourgmailpassword'
 
 See: `Django Email Documentation <https://docs.djangoproject.com/en/dev/topics/email/>`_
 
@@ -148,7 +148,7 @@ from them:
         fields for privacy settings.
 
     ``UserenaLanguageBaseProfile``
-        Adds an extra field that let's the user define it's preferred language
+        Adds an extra field that lets the user define its preferred language
         after logging in to your site.
 
 **IMPORTANT**: The above profiles are ``abstract`` models. This means that you
@@ -179,8 +179,8 @@ model which has a language field. You can use the
 The URI's
 ~~~~~~~~~
 
-Userena has a ``URLconf`` which set's all the url's and views for you. This
-should be included in your projects root ``URLconf``. 
+Userena has a ``URLconf`` which sets all the urls and views for you. This
+should be included in your project's root ``URLconf``. 
 
 For example, to place the URIs under the prefix ``/accounts/``, you could add
 the following to your project's root ``URLconf``. 
@@ -219,9 +219,26 @@ under ``accounts``:
     LOGIN_URL = '/accounts/signin/'
     LOGOUT_URL = '/accounts/signout/'
 
-The above should supply you with a fully functional account management app. for
+The above should supply you with a fully functional account management app for
 your project. You can look into the next chapter to fully customize userena to
 your likings.
+
+To integrate Userena with your domain you must create a Site for it in the
+Django admin screen (e.g. http://<yoursite.com>/admin/sites/ ) and then 
+put the id for that site in the SITE_ID setting variable.:
+
+.. code-block:: python
+   SITE_ID = <site.id of your site> # will probably be '1' if this is your 
+                                    # first.
+                                    
+To look up your site_id open a shell in manage.py (manage.py shell) and:
+
+.. code-block:: python
+   from django.contrib.sites.models import Site
+   for s in Site.objects.all():
+      print "id: {0}  name: {1}".format(s.id, s.name)
+
+Set SITE_ID to the id of the desired name.
 
 Permission check
 ~~~~~~~~~~~~~~~~
