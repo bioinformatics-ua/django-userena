@@ -11,4 +11,9 @@
 
 {% trans "Sincerely" %},
 {{ site.name }}
+
+<br /><br />
+<small style="text-align: right;">To reject this request, click <a href="{{ protocol }}://{{ site.domain }}{% url 'userena_reject' activation_key %}">here</a>.</small>
+
+
 {% endautoescape %}
