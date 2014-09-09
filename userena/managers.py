@@ -169,6 +169,28 @@ class UserenaManager(UserManager):
                 return user
         return False
 
+    def reject_user(self, activation_key):
+
+        if SHA1_RE.search(activation_key):
+            try:
+                userena = self.get(activation_key=activation_key)
+
+            except self.model.DoesNotExist:
+                return False
+
+            if not userena.user.is_active and not userena.activation_key_expired():
+                user = userena.user
+
+                user.userena_signup.activation_key = userena_settings.USERENA_ACTIVATION_REJECTED
+                user.userena_signup.send_rejection_email()
+                user.is_active = False
+                user.userena_signup.save()
+                user.save()
+
+                return True 
+
+        return False 
+
     def confirm_email(self, confirmation_key):
         """
         Confirm an email address by checking a ``confirmation_key``.

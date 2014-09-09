@@ -61,6 +61,10 @@ urlpatterns = patterns('',
        userena_views.activate,
        name='userena_activate'),
 
+    # Reject
+    url(r'^reject/(?P<activation_key>\w+)/$',
+       userena_views.reject,
+       name='userena_reject'),
 
     # Change email and confirm it
     url(r'^(?P<username>[\.\w-]+)/email/$',

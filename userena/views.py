@@ -22,10 +22,12 @@ from userena.utils import signin_redirect, get_profile_model, get_user_model
 from userena import signals as userena_signals
 from userena import settings as userena_settings
 
+from userena.managers import UserenaManager
 from guardian.decorators import permission_required_or_403
 
 import warnings
 
+import re
 
 class ExtraContextTemplateView(TemplateView):
     """ Add extra context to a simple template view """
@@ -224,6 +226,16 @@ def activate(request, activation_key,
             return ExtraContextTemplateView.as_view(template_name=retry_template_name,
                                                 extra_context=extra_context)(request)
 
+@secure_required
+def reject(request, activation_key, template_name='userena/rejection_complete.html'):
+
+    success = UserenaSignup.objects.reject_user(activation_key)
+
+    extra_context = dict()
+    extra_context['success'] = success
+
+    return ExtraContextTemplateView.as_view(template_name=template_name,
+                                                extra_context=extra_context)(request)
 
 @secure_required
 def email_confirm(request, confirmation_key,
