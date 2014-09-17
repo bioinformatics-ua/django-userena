@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load url from future %}
+
+{% block title %}{% trans "Rejection complete!" %}{% endblock %}
+
+{% block content %}
+    <legend>{% trans "Rejection complete!" %}</legend>
+    
+<p>{% blocktrans %}User has been informed of your decision.{% endblocktrans %}</p>
+{% endblock %}
