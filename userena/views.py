@@ -413,15 +413,18 @@ def signin(request, auth_form=AuthenticationForm,
 
     """
     form = auth_form()
+    referal = None
 
     if request.method == 'POST':
         form = auth_form(request.POST, request.FILES)
+        referal = request.POST.get('referal', None)
         if form.is_valid():
             identification, password, remember_me = (form.cleaned_data['identification'],
                                                      form.cleaned_data['password'],
                                                      form.cleaned_data['remember_me'])
             user = authenticate(identification=identification,
                                 password=password)
+            
             if user.is_active:
                 login(request, user)
                 if remember_me:
@@ -435,10 +438,16 @@ def signin(request, auth_form=AuthenticationForm,
 
                 #send a signal that a user has signed in
                 userena_signals.account_signin.send(sender=None, user=user)
-                # Whereto now?
+
+                # check if any referal to dynamic redirect has been passed
+                if referal != None:
+                    return HttpResponseRedirect(userena_settings.USERENA_SIGNIN_REDIRECT_BASE + referal)
+
+                # Whereto now if not dynamic redirect?
                 redirect_to = redirect_signin_function(
                     request.REQUEST.get(redirect_field_name), user)
                 return HttpResponseRedirect(redirect_to)
+
             else:
                 return redirect(reverse('userena_disabled',
                                         kwargs={'username': user.username}))
@@ -446,6 +455,7 @@ def signin(request, auth_form=AuthenticationForm,
     if not extra_context: extra_context = dict()
     extra_context.update({
         'form': form,
+        'referal': referal,
         'next': request.REQUEST.get(redirect_field_name),
         'request': request
     })

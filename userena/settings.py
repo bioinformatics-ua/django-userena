@@ -14,6 +14,9 @@ USERENA_REDIRECT_ON_SIGNOUT = getattr(settings,
                                       'USERENA_REDIRECT_ON_SIGNOUT',
                                       None)
 
+USERENA_SIGNIN_REDIRECT_BASE = getattr(settings,
+                                      'USERENA_SIGNIN_REDIRECT_BASE', '/')
+
 USERENA_SIGNIN_REDIRECT_URL = getattr(settings,
                                       'USERENA_SIGNIN_REDIRECT_URL',
                                       '/accounts/%(username)s/')
