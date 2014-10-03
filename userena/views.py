@@ -201,6 +201,7 @@ def activate(request, activation_key,
     """
 
     user = UserenaSignup.objects.activate_user(activation_key)
+
     if user and userena_settings.USERENA_MODERATE_REGISTRATION:
         if userena_settings.USERENA_USE_MESSAGES:
             messages.success(request, _('Your account has been activated and approved by admin.'),
@@ -224,6 +225,12 @@ def activate(request, activation_key,
             if not extra_context: extra_context = dict()
             extra_context['activation_key'] = activation_key
             return ExtraContextTemplateView.as_view(template_name=retry_template_name,
+                                                extra_context=extra_context)(request)
+    if userena_settings.USERENA_USE_MESSAGES:
+        messages.success(request, _('The account was already activated.'),
+                             fail_silently=True)
+
+    return ExtraContextTemplateView.as_view(template_name=template_name,
                                                 extra_context=extra_context)(request)
 
 @secure_required
@@ -282,7 +289,7 @@ def email_confirm(request, confirmation_key,
                                   kwargs={'username': user.username})
         return redirect(redirect_to)
     else:
-        if not extra_context: 
+        if not extra_context:
             extra_context = dict()
             extra_context['request'] = request
 
@@ -354,7 +361,7 @@ def disabled_account(request, username, template_name, extra_context=None):
 
     ``profile``
         Profile of the viewed user.
-    
+
     """
     user = get_object_or_404(get_user_model(), username__iexact=username)
 
@@ -366,7 +373,7 @@ def disabled_account(request, username, template_name, extra_context=None):
     extra_context['profile'] = user.get_profile()
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
-    
+
 @secure_required
 def signin(request, auth_form=AuthenticationForm,
            template_name='userena/signin_form.html',
@@ -449,7 +456,7 @@ def signin(request, auth_form=AuthenticationForm,
         'next': request.REQUEST.get(redirect_field_name),
         'request': request
     })
-        
+
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -741,7 +748,7 @@ def profile_detail(request, username,
     extra_context['profile'] = user.get_profile()
     extra_context['hide_email'] = userena_settings.USERENA_HIDE_EMAIL
     extra_context['request'] = request
-    
+
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -801,7 +808,7 @@ def profile_list(request, page=1, template_name='userena/profile_list.html',
     profile_model = get_profile_model()
     queryset = profile_model.objects.get_visible_profiles(request.user)
 
-    if not extra_context: 
+    if not extra_context:
         extra_context = dict()
         extra_context['request'] = request
 
