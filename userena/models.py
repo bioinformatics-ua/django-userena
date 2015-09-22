@@ -234,9 +234,12 @@ class UserenaSignup(models.Model):
                   [self.user.email, ])
 
         #Send email to admins with the message that the new user is active
-        emaillist = []
-        for k, v in settings.ADMINS:
-            emaillist.append(v)
+        if settings.USERENA_ADMIN_MODERATION:
+          for k, v in settings.ADMINS:
+              emaillist.append(v)
+        else:
+          emaillist.append(self.user.email)
+
         send_mail("EMIF Catalogue - Activation done",
                   message,
                   settings.DEFAULT_FROM_EMAIL,
@@ -332,7 +335,7 @@ class UserenaSignup(models.Model):
         else:
             message_html = None
 
-        send_mail(subject,                 
+        send_mail(subject,
                   message,
                   message_html,
                   settings.DEFAULT_FROM_EMAIL,
@@ -340,8 +343,14 @@ class UserenaSignup(models.Model):
 
         #Send email to admins with the link activation of new user
         emaillist = []
-        for k, v in settings.ADMINS:
-            emaillist.append(v)
+
+        if settings.USERENA_ADMIN_MODERATION:
+          for k, v in settings.ADMINS:
+              emaillist.append(v)
+        else:
+          emaillist.append(self.user.email)
+
+
         message = render_to_string('userena/emails/admin_activation_email_message.txt',
                                    context)
         if userena_settings.USERENA_HTML_EMAIL:
