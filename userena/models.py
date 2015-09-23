@@ -335,26 +335,27 @@ class UserenaSignup(models.Model):
         else:
             message_html = None
 
-        send_mail(subject,
+        #Send email to admins with the link activation of new user
+        emaillist = []
+
+        if settings.USERENA_ADMIN_MODERATION:
+
+            send_mail(subject,
                   message,
                   message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email, ])
 
-        #Send email to admins with the link activation of new user
-        emaillist = []
-
-        if settings.USERENA_ADMIN_MODERATION:
-          for k, v in settings.ADMINS:
-              emaillist.append(v)
+            for k, v in settings.ADMINS:
+                emaillist.append(v)
         else:
-          emaillist.append(self.user.email)
+            emaillist.append(self.user.email)
 
 
         message = render_to_string('userena/emails/admin_activation_email_message.txt',
                                    context)
         if userena_settings.USERENA_HTML_EMAIL:
-          message_html = render_to_string('userena/emails/admin_activation_email_message.html',
+            message_html = render_to_string('userena/emails/admin_activation_email_message.html',
                                    context)
 
         send_mail("EMIF Catalogue - Pending activation",
