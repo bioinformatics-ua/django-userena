@@ -240,7 +240,7 @@ class UserenaSignup(models.Model):
         else:
           emaillist.append(self.user.email)
 
-        send_mail("EMIF Catalogue - Activation done",
+        send_mail(settings.SITE_NAME + " - Activation done",
                   message,
                   settings.DEFAULT_FROM_EMAIL,
                   emaillist)
@@ -358,7 +358,7 @@ class UserenaSignup(models.Model):
             message_html = render_to_string('userena/emails/admin_activation_email_message.html',
                                    context)
 
-        send_mail("EMIF Catalogue - Pending activation",
+        send_mail(settings.SITE_NAME + "- Pending activation",
                   message,
                   message_html,
                   settings.DEFAULT_FROM_EMAIL,
