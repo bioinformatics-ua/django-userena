@@ -234,6 +234,7 @@ class UserenaSignup(models.Model):
                   [self.user.email, ])
 
         #Send email to admins with the message that the new user is active
+        emaillist = []
         if settings.USERENA_ADMIN_MODERATION:
           for k, v in settings.ADMINS:
               emaillist.append(v)
