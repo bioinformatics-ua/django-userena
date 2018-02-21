@@ -208,6 +208,12 @@ def activate(request, activation_key,
                              fail_silently=True)
 
         user.userena_signup.send_approval_email()
+        
+        if settings.USERENA_SIGNIN_AFTER_SIGNUP:
+            # Sign the user in.
+            auth_user = authenticate(identification=user.email,
+                                    check_password=False)
+            login(request, auth_user)
 
         return redirect(reverse('userena_activated'))
     elif user and settings.USERENA_SIGNIN_AFTER_SIGNUP:
@@ -224,6 +230,8 @@ def activate(request, activation_key,
         else:
             if not extra_context: extra_context = dict()
             extra_context['activation_key'] = activation_key
+            if settings.SINGLE_COMMUNITY:
+                return redirect(reverse('userena_activated'))
             return ExtraContextTemplateView.as_view(template_name=retry_template_name,
                                                 extra_context=extra_context)(request)
     if userena_settings.USERENA_USE_MESSAGES:

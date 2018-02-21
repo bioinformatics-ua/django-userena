@@ -233,18 +233,17 @@ class UserenaSignup(models.Model):
                   settings.DEFAULT_FROM_EMAIL,
                   [self.user.email, ])
 
-        #Send email to admins with the message that the new user is active
+        #Send email to admins with the same message
         emaillist = []
         if settings.USERENA_ADMIN_MODERATION:
           for k, v in settings.ADMINS:
               emaillist.append(v)
-        else:
-          emaillist.append(self.user.email)
 
-        send_mail(settings.SITE_NAME + " - Activation done",
-                  message,
-                  settings.DEFAULT_FROM_EMAIL,
-                  emaillist)
+          send_mail(settings.SITE_NAME + " - Activation done",
+                    message,
+                    message_html,
+                    settings.DEFAULT_FROM_EMAIL,
+                    emaillist)
 
     def send_approval_email(self):
         """
