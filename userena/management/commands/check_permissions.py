@@ -1,29 +1,40 @@
-from django.core.management.base import NoArgsCommand, BaseCommand
-from optparse import make_option
+from django.core.management.base import BaseCommand
+from django.utils.encoding import smart_text
 
+from userena.compat import make_options
 from userena.models import UserenaSignup
 
-class Command(NoArgsCommand):
+arguments = (
+    ('--no-output', {
+        'action': 'store_false',
+        'dest': 'output',
+        'default': True,
+        'help': 'Hide informational output.'
+    }),
+    ('--test', {
+        'action': 'store_true',
+        'dest': 'test',
+        'default': False,
+        'help': "Displays that it's testing management command. Don't use it yourself."
+    }),
+)
+
+
+class Command(BaseCommand):
     """
     For unknown reason, users can get wrong permissions.
     This command checks that all permissions are correct.
 
     """
-    option_list = BaseCommand.option_list + (
-        make_option('--no-output',
-            action='store_false',
-            dest='output',
-            default=True,
-            help='Hide informational output.'),
-        make_option('--test',
-            action='store_true',
-            dest='test',
-            default=False,
-            help="Displays that it's testing management command. Don't use it yourself."),
-        )
-    
+    option_list = make_options(arguments)
+
+    def add_arguments(self, parser):
+            for arg, attrs in arguments:
+                parser.add_argument(arg, **attrs)
+
+
     help = 'Check that user permissions are correct.'
-    def handle_noargs(self, **options):
+    def handle(self, **options):
         permissions, users, warnings  = UserenaSignup.objects.check_permissions()
         output = options.pop("output")
         test = options.pop("test")
@@ -35,7 +46,7 @@ class Command(NoArgsCommand):
                 self.stdout.write("Added permission: %s\n" % p)
 
             for u in users:
-                self.stdout.write("Changed permissions for user: %s\n" % u)
+                self.stdout.write("Changed permissions for user: %s\n" % smart_text(u, encoding='utf-8', strings_only=False))
 
             for w in warnings:
                 self.stdout.write("WARNING: %s\n" %w)

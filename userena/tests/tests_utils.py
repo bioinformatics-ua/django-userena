@@ -1,46 +1,55 @@
+import sys, re, six
+
 from django.test import TestCase
 from django.conf import settings
-from django.contrib.auth.models import SiteProfileNotAvailable
+from django.contrib.auth import get_user_model
+from django.utils.six.moves.urllib_parse import urlparse, parse_qs
 
 from userena.utils import (get_gravatar, signin_redirect, get_profile_model,
-                           get_protocol, get_user_model)
+                           get_protocol, generate_sha1)
 from userena import settings as userena_settings
-from userena.models import UserenaBaseProfile
+from userena.compat import SiteProfileNotAvailable
 
-import hashlib
 
 class UtilsTests(TestCase):
     """ Test the extra utils methods """
     fixtures = ['users']
 
-    def test_get_gravatar(self):
-        template = '//www.gravatar.com/avatar/%(hash)s?s=%(size)s&d=%(type)s'
+    def test_generate_sha(self):
+        s1 = six.u('\xc5se')
+        s2 = six.u('\xd8ystein')
+        s3 = six.u('\xc6gir')
+        h1 = generate_sha1(s1)
+        h2 = generate_sha1(s2)
+        h3 = generate_sha1(s3)
+        # Check valid SHA1 activation key
+        self.assertTrue(re.match('^[a-f0-9]{40}$', h1[1]))
+        self.assertTrue(re.match('^[a-f0-9]{40}$', h2[1]))
+        self.assertTrue(re.match('^[a-f0-9]{40}$', h3[1]))
 
-        # The hash for alice@example.com
-        hash = hashlib.md5('alice@example.com').hexdigest()
+    def test_get_gravatar(self):
+        template = 's=%(size)s&d=%(type)s'
 
         # Check the defaults.
-        self.failUnlessEqual(get_gravatar('alice@example.com'),
-                             template % {'hash': hash,
-                                         'size': 80,
-                                         'type': 'identicon'})
+        parsed = urlparse(get_gravatar('alice@example.com'))
+        self.assertEqual(
+            parse_qs(parsed.query),
+            parse_qs(template % {'size': 80, 'type': 'identicon'})
+        )
 
         # Check different size
-        self.failUnlessEqual(get_gravatar('alice@example.com', size=200),
-                             template % {'hash': hash,
-                                         'size': 200,
-                                         'type': 'identicon'})
+        parsed = urlparse(get_gravatar('alice@example.com', size=200))
+        self.assertEqual(
+            parse_qs(parsed.query),
+            parse_qs(template % {'size': 200, 'type': 'identicon'})
+        )
 
         # Check different default
-        http_404 = get_gravatar('alice@example.com', default='404')
-        self.failUnlessEqual(http_404,
-                             template % {'hash': hash,
-                                         'size': 80,
-                                         'type': '404'})
-
-        # Is it really a 404?
-        response = self.client.get(http_404)
-        self.failUnlessEqual(response.status_code, 404)
+        parsed = urlparse(get_gravatar('alice@example.com', default='404'))
+        self.assertEqual(
+            parse_qs(parsed.query),
+            parse_qs(template % {'size': 80, 'type': '404'})
+        )
 
     def test_signin_redirect(self):
         """
@@ -49,15 +58,15 @@ class UtilsTests(TestCase):
 
         """
         # Test with a requested redirect
-        self.failUnlessEqual(signin_redirect(redirect='/accounts/'), '/accounts/')
+        self.assertEqual(signin_redirect(redirect='/accounts/'), '/accounts/')
 
         # Test with only the user specified
         user = get_user_model().objects.get(pk=1)
-        self.failUnlessEqual(signin_redirect(user=user),
+        self.assertEqual(signin_redirect(user=user),
                              '/accounts/%s/' % user.username)
 
         # The ultimate fallback, probably never used
-        self.failUnlessEqual(signin_redirect(), settings.LOGIN_REDIRECT_URL)
+        self.assertEqual(signin_redirect(), settings.LOGIN_REDIRECT_URL)
 
     def test_get_profile_model(self):
         """
@@ -77,8 +86,7 @@ class UtilsTests(TestCase):
 
     def test_get_protocol(self):
         """ Test if the correct protocol is returned """
-        self.failUnlessEqual(get_protocol(), 'http')
+        self.assertEqual(get_protocol(), 'http')
 
-        userena_settings.USERENA_USE_HTTPS = True
-        self.failUnlessEqual(get_protocol(), 'https')
-        userena_settings.USERENA_USE_HTTPS = False
+        with self.settings(USERENA_USE_HTTPS=True):
+            self.assertEqual(get_protocol(), 'https')

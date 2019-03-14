@@ -1,13 +1,11 @@
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, REDIRECT_FIELD_NAME
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import logout as Signout
 from django.views.generic import TemplateView
-from django.template.context import RequestContext
 from django.views.generic.list import ListView
-from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
@@ -17,8 +15,7 @@ from userena.forms import (SignupForm, SignupFormOnlyEmail, AuthenticationForm,
                            ChangeEmailForm, EditProfileForm)
 from userena.models import UserenaSignup
 from userena.decorators import secure_required
-from userena.backends import UserenaAuthenticationBackend
-from userena.utils import signin_redirect, get_profile_model, get_user_model
+from userena.utils import signin_redirect, get_profile_model, get_user_profile
 from userena import signals as userena_signals
 from userena import settings as userena_settings
 
@@ -177,6 +174,11 @@ def activate(request, activation_key,
     activated.  After a successful activation the view will redirect to
     ``success_url``.  If the SHA1 is not found, the user will be shown the
     ``template_name`` template displaying a fail message.
+<<<<<<< HEAD
+=======
+    If the SHA1 is found but expired, ``retry_template_name`` is used instead,
+    so the user can proceed to :func:`activate_retry` to get a new activation key.
+>>>>>>> 7dfb3d5d148127e32f217a62096d507266a3a83c
 
     :param activation_key:
         String of a SHA1 string of 40 characters long. A SHA1 is always 160bit
@@ -339,8 +341,9 @@ def direct_to_user_template(request, username, template_name,
 
     if not extra_context: extra_context = dict()
     extra_context['viewed_user'] = user
-    extra_context['profile'] = user.get_profile()
     extra_context['request'] = request
+    extra_context['profile'] = get_user_profile(user=user)
+
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -378,7 +381,7 @@ def disabled_account(request, username, template_name, extra_context=None):
 
     if not extra_context: extra_context = dict()
     extra_context['viewed_user'] = user
-    extra_context['profile'] = user.get_profile()
+    extra_context['profile'] = get_user_profile(user=user)
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -460,7 +463,8 @@ def signin(request, auth_form=AuthenticationForm,
 
                 # Whereto now if not dynamic redirect?
                 redirect_to = redirect_signin_function(
-                    request.REQUEST.get(redirect_field_name), user)
+                    request.GET.get(redirect_field_name,
+                                    request.POST.get(redirect_field_name)), user)
                 return HttpResponseRedirect(redirect_to)
 
             else:
@@ -470,9 +474,13 @@ def signin(request, auth_form=AuthenticationForm,
     if not extra_context: extra_context = dict()
     extra_context.update({
         'form': form,
+
         'referal': referal,
-        'next': request.REQUEST.get(redirect_field_name),
+        #'next': request.REQUEST.get(redirect_field_name),
         'request': request
+        'next': request.GET.get(redirect_field_name,
+                                request.POST.get(redirect_field_name)),
+
     })
 
     return ExtraContextTemplateView.as_view(template_name=template_name,
@@ -550,9 +558,8 @@ def email_change(request, username, email_form=ChangeEmailForm,
     form = email_form(user)
 
     if request.method == 'POST':
-        form = email_form(user,
-                          request.POST,
-                          request.FILES)
+        form = email_form(user, request.POST, request.FILES)
+
 
         if form.is_valid():
             form.save()
@@ -570,8 +577,9 @@ def email_change(request, username, email_form=ChangeEmailForm,
 
     if not extra_context: extra_context = dict()
     extra_context['form'] = form
-    extra_context['profile'] = user.get_profile()
     extra_context['request'] = request
+    extra_context['profile'] = get_user_profile(user=user)
+
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -639,8 +647,8 @@ def password_change(request, username, template_name='userena/password_form.html
 
     if not extra_context: extra_context = dict()
     extra_context['form'] = form
-    extra_context['profile'] = user.get_profile()
     extra_context['request'] = request
+    extra_context['profile'] = get_user_profile(user=user)
     return ExtraContextTemplateView.as_view(template_name=template_name,
                                             extra_context=extra_context)(request)
 
@@ -691,10 +699,9 @@ def profile_edit(request, username, edit_profile_form=EditProfileForm,
         Instance of the ``Profile`` that is edited.
 
     """
-    user = get_object_or_404(get_user_model(),
-                             username__iexact=username)
+    user = get_object_or_404(get_user_model(), username__iexact=username)
 
-    profile = user.get_profile()
+    profile = get_user_profile(user=user)
 
     user_initial = {'first_name': user.first_name,
                     'last_name': user.last_name}
@@ -751,19 +758,12 @@ def profile_detail(request, username,
         Instance of the currently viewed ``Profile``.
 
     """
-    user = get_object_or_404(get_user_model(),
-                             username__iexact=username)
-
-    profile_model = get_profile_model()
-    try:
-        profile = user.get_profile()
-    except profile_model.DoesNotExist:
-        profile = profile_model.objects.create(user=user)
-
+    user = get_object_or_404(get_user_model(), username__iexact=username)
+    profile = get_user_profile(user=user)
     if not profile.can_view_profile(request.user):
         raise PermissionDenied
     if not extra_context: extra_context = dict()
-    extra_context['profile'] = user.get_profile()
+    extra_context['profile'] = profile
     extra_context['hide_email'] = userena_settings.USERENA_HIDE_EMAIL
     extra_context['request'] = request
 

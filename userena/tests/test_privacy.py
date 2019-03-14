@@ -37,8 +37,8 @@ class PrivacyTests(TestCase):
         for user, status in users_status:
             if user:
                 self.client.login(**user)
-            response = self.client.get(url)
-            self.failUnlessEqual(response.status_code, status)
+            response = self.client.get(url, follow=True)
+            self.assertEqual(response.status_code, status)
 
     def test_detail_open_profile_view(self):
         """ Viewing an open profile should be visible to everyone """

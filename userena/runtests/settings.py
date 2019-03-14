@@ -1,8 +1,11 @@
 # Django settings for Userena demo project.
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 import os
+import sys
+
+import django
+
 settings_dir = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.abspath(settings_dir)
 
@@ -68,11 +71,42 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '_g-js)o8z#8=9pr1&amp;05h^1_#)91sbo-)g^(*=-+epxmt4kc9m#'
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
+
+if django.VERSION < (1, 8):
+    TEMPLATE_DEBUG = DEBUG
+
+    TEMPLATE_DIRS = (
+        os.path.join(PROJECT_ROOT, 'templates/'),
+    )
+
+    # List of callables that know how to import templates from various sources.
+    TEMPLATE_LOADERS = (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+    )
+else:
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [
+                # insert your TEMPLATE_DIRS here
+            ],
+            'APP_DIRS': True,
+            'OPTIONS': {
+                'context_processors': [
+                    # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
+                    # list if you haven't customized them:
+                    'django.contrib.auth.context_processors.auth',
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.i18n',
+                    'django.template.context_processors.media',
+                    'django.template.context_processors.static',
+                    'django.template.context_processors.tz',
+                    'django.contrib.messages.context_processors.messages',
+                ],
+            },
+        },
+    ]
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -84,6 +118,12 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.locale.LocaleMiddleware',
     'userena.middleware.UserenaLocaleMiddleware',
 )
+
+if django.VERSION >= (1, 7):
+    # Session verification will become mandatory in Django 1.10
+    MIDDLEWARE_CLASSES += (
+        'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    )
 
 # Add the Guardian and userena authentication backends
 AUTHENTICATION_BACKENDS = (
@@ -103,10 +143,6 @@ USERENA_MUGSHOT_SIZE = 140
 ROOT_URLCONF = 'urls'
 WSGI_APPLICATION = 'demo.wsgi.application'
 
-TEMPLATE_DIRS = (
-    os.path.join(PROJECT_ROOT, 'templates/'),
-)
-
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -117,11 +153,22 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'guardian',
-    'south',
     'userena',
     'userena.contrib.umessages',
     'userena.tests.profiles',
 )
+
+if django.VERSION < (1, 7, 0):
+    # only older versions of django require south migrations
+    INSTALLED_APPS += ('south',)
+    SOUTH_MIGRATION_MODULES = {
+        'easy_thumbnails': 'easy_thumbnails.south_migrations',
+        'userena.contrib.umessages': 'userena.contrib.umessages.south_migrations',
+    }
+
+if django.VERSION >= (1, 9, 0):
+    INSTALLED_APPS += ('easy_thumbnails',)
+
 
 LOGGING = {
     'version': 1,
@@ -150,5 +197,4 @@ LOGGING = {
 # Needed for Django guardian
 ANONYMOUS_USER_ID = -1
 
-# Test runner
-TEST_RUNNER = 'django_coverage.coverage_runner.CoverageRunner'
+USERENA_USE_HTTPS = False

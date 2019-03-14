@@ -1,16 +1,15 @@
 import re
 
 from datetime import datetime, timedelta
+from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django.core import mail
 from django.contrib.auth.forms import PasswordChangeForm
-from django.conf import settings
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from userena import forms
 from userena import settings as userena_settings
-from userena.utils import get_user_model
+from userena.utils import get_user_profile
 
 User = get_user_model()
 
@@ -35,7 +34,7 @@ class UserenaViewsTests(TestCase):
                              reverse('userena_profile_detail', kwargs={'username': user.username}))
 
         user = User.objects.get(email='alice@example.com')
-        self.failUnless(user.is_active)
+        self.assertTrue(user.is_active)
 
     def test_activation_expired_retry(self):
         """ A ``GET`` to the activation view when activation link is expired """
@@ -55,7 +54,7 @@ class UserenaViewsTests(TestCase):
         self.assertContains(response, "Request a new activation link")
 
         user = User.objects.get(email='alice@example.com')
-        self.failUnless(not user.is_active)
+        self.assertTrue(not user.is_active)
         userena_settings.USERENA_ACTIVATION_RETRY = False
 
     def test_retry_activation_ask(self):
@@ -79,11 +78,11 @@ class UserenaViewsTests(TestCase):
         user = User.objects.get(email='alice@example.com')
         self.assertContains(response, "Account re-activation succeeded")
 
-        self.failIfEqual(old_key, user.userena_signup.activation_key)
+        self.assertNotEqual(old_key, user.userena_signup.activation_key)
         user = User.objects.get(email='alice@example.com')
-        self.failUnless(not user.is_active)
+        self.assertTrue(not user.is_active)
 
-        self.failUnlessEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[1].to, ['alice@example.com'])
         self.assertTrue(mail.outbox[1].body.find("activate your account ")>-1)
 
@@ -93,7 +92,7 @@ class UserenaViewsTests(TestCase):
                              reverse('userena_profile_detail', kwargs={'username': user.username}))
 
         user = User.objects.get(email='alice@example.com')
-        self.failUnless(user.is_active)
+        self.assertTrue(user.is_active)
         userena_settings.USERENA_ACTIVATION_RETRY = False
 
     def test_invalid_activation(self):
@@ -149,7 +148,7 @@ class UserenaViewsTests(TestCase):
                                 'userena/signup_form.html')
 
         # Check that the correct form is used.
-        self.failUnless(isinstance(response.context['form'],
+        self.assertTrue(isinstance(response.context['form'],
                                    forms.SignupForm))
 
         # Now check that a different form is used when
@@ -157,25 +156,25 @@ class UserenaViewsTests(TestCase):
         userena_settings.USERENA_WITHOUT_USERNAMES = True
 
         response = self.client.get(reverse('userena_signup'))
-        self.failUnless(isinstance(response.context['form'],
+        self.assertTrue(isinstance(response.context['form'],
                                    forms.SignupFormOnlyEmail))
 
         # Back to default
         userena_settings.USERENA_WITHOUT_USERNAMES = False
-        
+
         # Check for 403 with signups disabled
         userena_settings.USERENA_DISABLE_SIGNUP = True
-        
+
         response = self.client.get(reverse('userena_signup'))
         self.assertEqual(response.status_code, 403)
-        
+
         # Back to default
         userena_settings.USERENA_DISABLE_SIGNUP = False
 
     def test_signup_view_signout(self):
         """ Check that a newly signed user shouldn't be signed in. """
         # User should be signed in
-        self.failUnless(self.client.login(username='john', password='blowfish'))
+        self.assertTrue(self.client.login(username='john', password='blowfish'))
         # Post a new, valid signup
         response = self.client.post(reverse('userena_signup'),
                                     data={'username': 'alice',
@@ -185,7 +184,7 @@ class UserenaViewsTests(TestCase):
                                           'tos': 'on'})
 
         # And should now be signed out
-        self.failIf(len(self.client.session.keys()) > 0)
+        self.assertFalse(len(self.client.session.keys()) > 0)
 
     def test_signup_view_success(self):
         """
@@ -278,7 +277,7 @@ class UserenaViewsTests(TestCase):
                                     data={'identification': 'john@example.com',
                                           'password': 'blowfish'})
 
-        self.failUnless(self.client.session.get_expire_at_browser_close())
+        self.assertTrue(self.client.session.get_expire_at_browser_close())
 
     def test_signin_view_inactive(self):
         """ A ``POST`` from a inactive user """
@@ -350,7 +349,7 @@ class UserenaViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Check that the correct form is used.
-        self.failUnless(isinstance(response.context['form'],
+        self.assertTrue(isinstance(response.context['form'],
                                    forms.ChangeEmailForm))
 
         self.assertTemplateUsed(response,
@@ -375,7 +374,7 @@ class UserenaViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'userena/password_form.html')
-        self.failUnless(response.context['form'],
+        self.assertTrue(response.context['form'],
                         PasswordChangeForm)
 
     def test_change_password_view_success(self):
@@ -394,7 +393,7 @@ class UserenaViewsTests(TestCase):
 
         # Check that the new password is set.
         john = User.objects.get(username='john')
-        self.failUnless(john.check_password(new_password))
+        self.assertTrue(john.check_password(new_password))
 
     def test_profile_detail_view(self):
         """ A ``GET`` to the detailed view of a user """
@@ -412,7 +411,7 @@ class UserenaViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'userena/profile_form.html')
-        self.failUnless(isinstance(response.context['form'],
+        self.assertTrue(isinstance(response.context['form'],
                                    forms.EditProfileForm))
 
     def test_profile_edit_view_success(self):
@@ -430,7 +429,7 @@ class UserenaViewsTests(TestCase):
                                                kwargs={'username': 'john'}))
 
         # Users hould be changed now.
-        profile = User.objects.get(username='john').get_profile()
+        profile = get_user_profile(user=User.objects.get(username='john'))
         self.assertEqual(profile.about_me, new_about_me)
 
 
@@ -455,7 +454,7 @@ class UserenaViewsTests(TestCase):
         # check if there was success redirect to userena_password_reset_done
         # and email was sent
         self.assertEqual(response.status_code, 302)
-        self.assertIn(reverse('userena_password_reset_done'), str(response))
+        self.assertIn(reverse('userena_password_reset_done'), response.get('Location'))
         self.assertTrue(mail.outbox)
 
     def test_password_reset_view_failure(self):
@@ -482,4 +481,4 @@ class UserenaViewsTests(TestCase):
                                     data={'new_password1': 'pass',
                                           'new_password2': 'pass',})
         self.assertEqual(response.status_code, 302)
-        self.assertIn(reverse('userena_password_reset_complete'), str(response))
+        self.assertIn(reverse('userena_password_reset_complete'), response.get('Location'))

@@ -4,20 +4,39 @@ Installation.
 =============
 
 Before install django-userena, you'll need to have a copy of `Django
-<http://www.djangoproject.com>`_ 1.2 or newer installed.
+<http://www.djangoproject.com>`_ 1.5 or newer installed. django-userena is
+tested under Python 2.6, 2.7, 3.2, 3.3, 3.4, and 3.5 (all versions on which
+Django 1.5 and higher is declared to work)
 
 For further information, consult the `Django download page
 <http://www.djangoproject.com/download/>`_, which offers convenient packaged
 downloads and installation instructions.
 
-warning::
-   
-   django-userena has not been tested on Python3 yet.
+Support for Django versions below 1.7
+-------------------------------------
+
+Starting from version 2.0.0 django-userena supports Django 1.9 release and
+drops the support for Django 1.4. It is tested and works for all releases
+from 1.5 to 1.9 but some older versions of Django require some additional work
+in order to ensure full compatibility:
+
+* Django versions below 1.7 require South for data migrations. django-userena
+  provides new-style migrations for built-in Django schema migrations engine
+  (available starting from Django 1.7) but provides old South migrations in
+  ``userena.south_migrations`` and ``userena.contrib.umessages.south_migrations``
+  subpackages. South (starting from version 1.0.0) should be able to pick
+  them easily if you still use it even for Django versions 1.7 or greater.
+  Anyway, South support in django-userena is deprecated and will be removed
+  in some future major release (3.0.0 or 4.0.0 version).
+* django-guardian is one of the main dependecies of django-userena and every
+  release of this package seems to drop some bacwards compatibility without
+  resonable versioning scheme. This is why for Django 1.5 and 1.6 you
+  need to fix django-guardian on version 1.3.2 or lower manually.
 
 Installing django-userena.
 --------------------------
 
-You can install django-userena automagicly with ``pip``. Or by manually
+You can install django-userena automagically with ``pip``. Or by manually
 placing it on on your ``PYTHON_PATH``. The recommended way is the shown in
 :ref:`pip-install`.
 
@@ -86,6 +105,8 @@ your project. This means modifying ``AUTHENTICATION_BACKENDS``,
 
 Begin by adding ``userena``, ``guardian`` and ``easy_thumbnails`` to the
 ``INSTALLED_APPS`` in your settings.py file of your project.
+``django.contrib.sites`` must also be present if it is not already (see `Django docs
+<https://docs.djangoproject.com/en/1.8/ref/contrib/sites/>`_.).
 
 Next add ``UserenaAuthenticationBackend`` and ``ObjectPermissionBackend`` 
 also in your settings.py file, from django-guardian, at the top of ``AUTHENTICATION_BACKENDS``. 
@@ -215,7 +236,7 @@ under ``accounts``:
 
 .. code-block:: python
 
-    LOGIN_REDIRECT_URL = '/accounts/%(username)s/'
+    USERENA_SIGNIN_REDIRECT_URL = '/accounts/%(username)s/'
     LOGIN_URL = '/accounts/signin/'
     LOGOUT_URL = '/accounts/signout/'
 

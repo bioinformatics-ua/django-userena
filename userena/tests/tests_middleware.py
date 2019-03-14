@@ -1,15 +1,29 @@
+from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 from django.test import TestCase
-from django.utils.importlib import import_module
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
 
 from userena.tests.profiles.models import Profile
 from userena.middleware import UserenaLocaleMiddleware
 from userena import settings as userena_settings
-from userena.utils import get_user_model
+from userena.utils import get_user_profile, get_profile_model
 
 User = get_user_model()
+
+
+def has_profile(user):
+    """Test utility function to check if user has profile"""
+    profile_model = get_profile_model()
+    try:
+        profile = user.get_profile()
+    except AttributeError:
+        related_name = profile_model._meta.get_field('user')\
+                                    .related_query_name()
+        profile = getattr(user, related_name, None)
+    except profile_model.DoesNotExist:
+        profile = None
+
+    return bool(profile)
+
 
 
 class UserenaLocaleMiddlewareTests(TestCase):
@@ -37,16 +51,16 @@ class UserenaLocaleMiddlewareTests(TestCase):
 
         for pk, lang in users:
             user = User.objects.get(pk=pk)
-            profile = user.get_profile()
+            profile = get_user_profile(user=user)
 
             req = self._get_request_with_user(user)
 
             # Check that the user has this preference
-            self.failUnlessEqual(profile.language, lang)
+            self.assertEqual(profile.language, lang)
 
             # Request should have a ``LANGUAGE_CODE`` with dutch
             UserenaLocaleMiddleware().process_request(req)
-            self.failUnlessEqual(req.LANGUAGE_CODE, lang)
+            self.assertEqual(req.LANGUAGE_CODE, lang)
 
     def test_without_profile(self):
         """ Middleware should do nothing when a user has no profile """
@@ -55,12 +69,12 @@ class UserenaLocaleMiddlewareTests(TestCase):
         user = User.objects.get(pk=1)
 
         # User shouldn't have a profile
-        self.assertRaises(ObjectDoesNotExist, user.get_profile)
+        self.assertFalse(has_profile(user))
 
         req = self._get_request_with_user(user)
         UserenaLocaleMiddleware().process_request(req)
 
-        self.failIf(hasattr(req, 'LANGUAGE_CODE'))
+        self.assertFalse(hasattr(req, 'LANGUAGE_CODE'))
 
     def test_without_language_field(self):
         """ Middleware should do nothing if the profile has no language field """
@@ -71,4 +85,4 @@ class UserenaLocaleMiddlewareTests(TestCase):
 
         # Middleware should do nothing
         UserenaLocaleMiddleware().process_request(req)
-        self.failIf(hasattr(req, 'LANGUAGE_CODE'))
+        self.assertFalse(hasattr(req, 'LANGUAGE_CODE'))

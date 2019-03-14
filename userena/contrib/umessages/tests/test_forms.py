@@ -1,7 +1,11 @@
+#encoding:utf-8
+from __future__ import unicode_literals
+
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from userena.contrib.umessages.forms import ComposeForm
-from userena.utils import get_user_model
+
 
 class ComposeFormTests(TestCase):
     """ Test the compose form. """
@@ -19,12 +23,12 @@ class ComposeFormTests(TestCase):
             # No body
             {'data': {'to': 'john',
                       'body': ''},
-             'error': ('body', [u'This field is required.'])},
+             'error': ('body', ['This field is required.'])},
         ]
 
         for invalid_dict in invalid_data_dicts:
             form = ComposeForm(data=invalid_dict['data'])
-            self.failIf(form.is_valid())
+            self.assertFalse(form.is_valid())
             self.assertEqual(form.errors[invalid_dict['error'][0]],
                              invalid_dict['error'][1])
 
@@ -35,17 +39,17 @@ class ComposeFormTests(TestCase):
 
         form = ComposeForm(data=valid_data)
 
-        self.failUnless(form.is_valid())
+        self.assertTrue(form.is_valid())
 
         # Save the form.
         sender = get_user_model().objects.get(username='jane')
         msg = form.save(sender)
 
         # Check if the values are set correctly
-        self.failUnlessEqual(msg.body, valid_data['body'])
-        self.failUnlessEqual(msg.sender, sender)
-        self.failUnless(msg.sent_at)
+        self.assertEqual(msg.body, valid_data['body'])
+        self.assertEqual(msg.sender, sender)
+        self.assertTrue(msg.sent_at)
 
         # Check recipients
-        self.failUnlessEqual(msg.recipients.all()[0].username, 'jane')
-        self.failUnlessEqual(msg.recipients.all()[1].username, 'john')
+        self.assertEqual(msg.recipients.all()[0].username, 'jane')
+        self.assertEqual(msg.recipients.all()[1].username, 'john')
