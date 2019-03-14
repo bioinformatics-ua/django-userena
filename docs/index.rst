@@ -6,7 +6,7 @@
 Userena Introduction
 ====================
 
-This documentation covers |release| release of django-userena application.
+This documentation covers |release| release of django-userena-ce application.
 A Django application that takes care of your account needs.
 
 Why userena?
@@ -43,23 +43,14 @@ Found a bug in userena? File an issue at Github. Have an improvement? Fork it
 and add it, or if you can't code it, contact us to do it.
 
 
-Deprecation warnigns
-====================
-
-2.0.0 version:
-
-- ``userena.utils.get_user_model()`` is deprecated and will be removed in
-  version 3.0.0. Use ``django.contrib.auth.get_user_model()``
-
-
 Changes and releases
 ====================
 
 For changes history and available releases see following pages on GitHub
 repository:
 
-* `UDATES.md <https://github.com/django-guardian/django-guardian/blob/devel/CHANGES.md>`_
-* `releases <https://github.com/django-guardian/django-guardian/releases>`_
+* `UDATES.md <https://github.com/django-userena-ce/django-userena-ce/blob/master/UPDATES.md>`_
+* `releases <https://github.com/django-userena-ce/django-userena-ce/releases>`_
 
 
 Contents

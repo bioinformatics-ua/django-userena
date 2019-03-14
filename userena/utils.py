@@ -1,12 +1,17 @@
+from django.apps import apps
 from django.conf import settings
 from django.utils.encoding import smart_bytes
-from django.utils.functional import allow_lazy
+try:
+    # django.VERSION < 2.0
+    from django.utils.functional import allow_lazy
+except ImportError:
+    from django.utils.functional import keep_lazy_text
 from django.utils.http import urlencode
 from django.utils.six import text_type
 from django.utils.text import Truncator
 
 from userena import settings as userena_settings
-from userena.compat import SiteProfileNotAvailable, get_model
+from userena.compat import SiteProfileNotAvailable
 
 from hashlib import sha1, md5
 import random, datetime
@@ -16,8 +21,12 @@ import warnings
 def truncate_words(s, num, end_text='...'):
     truncate = end_text and ' %s' % end_text or ''
     return Truncator(s).words(num, truncate=truncate)
-truncate_words = allow_lazy(truncate_words, text_type)
 
+try:
+    # django.VERSION < 2.0
+    truncate_words = allow_lazy(truncate_words, text_type)
+except NameError:
+    truncate_words = keep_lazy_text(truncate_words)
 
 def get_gravatar(email, size=80, default='identicon'):
     """ Get's a Gravatar for a email address.
@@ -129,7 +138,7 @@ def get_profile_model():
         raise SiteProfileNotAvailable
 
     try:
-        profile_mod = get_model(*settings.AUTH_PROFILE_MODULE.rsplit('.', 1))
+        profile_mod = apps.get_model(*settings.AUTH_PROFILE_MODULE.rsplit('.', 1))
     except LookupError:
         profile_mod = None
 
@@ -186,11 +195,3 @@ def get_datetime_now():
 # to get_user_model deferred to execution time
 
 user_model_label = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
-
-
-def get_user_model():
-    warnings.warn("Use Django's django.contrib.auth.get_user_model directly. "
-                  "This function will be removed in future versions of "
-                  "django-userena.", DeprecationWarning)
-    from django.contrib.auth import get_user_model
-    return get_user_model()

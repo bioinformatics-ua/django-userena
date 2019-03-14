@@ -48,7 +48,8 @@ class UserenaSignup(models.Model):
     """
     user = models.OneToOneField(user_model_label,
                                 verbose_name=_('user'),
-                                related_name='userena_signup')
+                                related_name='userena_signup',
+                                on_delete=models.CASCADE)
 
     last_active = models.DateTimeField(_('last active'),
                                        blank=True,
@@ -351,6 +352,7 @@ class UserenaBaseProfile(models.Model):
 
         """
         abstract = True
+        default_permissions = ('add', 'change', 'delete')
         permissions = PROFILE_PERMISSIONS
 
     def __str__(self):
@@ -482,4 +484,5 @@ class UserenaLanguageBaseProfile(UserenaBaseProfile):
 
     class Meta:
         abstract = True
+        default_permissions = ('add', 'change', 'delete')
         permissions = PROFILE_PERMISSIONS

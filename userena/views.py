@@ -1,9 +1,16 @@
-from django.core.urlresolvers import reverse
+from django.contrib.messages.views import SuccessMessageMixin
+from django.utils.decorators import method_decorator
+
+try:
+    # django.VERSION < 2.0
+    from django.core.urlresolvers import reverse
+except ImportError:
+    from django.urls import reverse
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, REDIRECT_FIELD_NAME
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.views import logout as Signout
+from django.contrib.auth.views import LogoutView
 from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 from django.contrib import messages
@@ -142,10 +149,15 @@ def signup(request, signup_form=SignupForm,
             else:
                 redirect_to = reverse('userena_signup_complete')
 
-            if user and not userena_settings.USERENA_MODERATE_REGISTRATION:
-                # A new signed user should logout the old one.
-                if request.user.is_authenticated():
-                    logout(request)
+            # A new signed user should logout the old one.
+            try:
+                # django.VERSION < 1.11
+                authenticated = request.user.is_authenticated()
+            except TypeError:
+                authenticated = request.user.is_authenticated
+
+            if authenticated:
+                logout(request)
 
                 if (userena_settings.USERENA_SIGNIN_AFTER_SIGNUP and
                         not userena_settings.USERENA_ACTIVATION_REQUIRED):
@@ -174,11 +186,6 @@ def activate(request, activation_key,
     activated.  After a successful activation the view will redirect to
     ``success_url``.  If the SHA1 is not found, the user will be shown the
     ``template_name`` template displaying a fail message.
-<<<<<<< HEAD
-=======
-    If the SHA1 is found but expired, ``retry_template_name`` is used instead,
-    so the user can proceed to :func:`activate_retry` to get a new activation key.
->>>>>>> 7dfb3d5d148127e32f217a62096d507266a3a83c
 
     :param activation_key:
         String of a SHA1 string of 40 characters long. A SHA1 is always 160bit
@@ -487,9 +494,13 @@ def signin(request, auth_form=AuthenticationForm,
                                             extra_context=extra_context)(request)
 
 
+#<<<<<<< HEAD
 @secure_required
 def signout(request, next_page=userena_settings.USERENA_REDIRECT_ON_SIGNOUT,
             template_name='userena/signout.html', *args, **kwargs):
+#=======
+#class SignoutView(LogoutView, SuccessMessageMixin):
+#>>>>>>> 54137a8ef64048ef9a5a8f0b39d49e486817a22c
     """
     Signs out the user and adds a success message ``You have been signed
     out.`` If next_page is defined you will be redirected to the URI. If
@@ -503,10 +514,23 @@ def signout(request, next_page=userena_settings.USERENA_REDIRECT_ON_SIGNOUT,
         ``userena/signout.html``.
 
     """
-    if request.user.is_authenticated() and userena_settings.USERENA_USE_MESSAGES: # pragma: no cover
-        messages.success(request, _('You have been signed out.'), fail_silently=True)
-    userena_signals.account_signout.send(sender=None, user=request.user)
-    return Signout(request, next_page, template_name, *args, **kwargs)
+    template_name = 'userena/signout.html'
+    next_page = userena_settings.USERENA_REDIRECT_ON_SIGNOUT
+
+    def get_success_message(self, cleaned_data):
+        authenticated = self.request.user.is_authenticated
+
+        if authenticated and userena_settings.USERENA_USE_MESSAGES: # pragma: no cover
+            return  _('You have been signed out.')
+        else:
+            return ''
+
+    @method_decorator(secure_required)
+    def dispatch(self, request, *args, **kwargs):
+        response = super(SignoutView, self).dispatch(request, *args, **kwargs)
+        userena_signals.account_signout.send(sender=None, user=request.user)
+        return response
+
 
 
 @secure_required

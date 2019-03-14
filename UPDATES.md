@@ -1,8 +1,42 @@
 # UPDATES
 
+## Version 4.1.0
+
+- Adds support for Django 2.1 and Python 3.7
+- Note: you will probably need to generate a migrations for concrete implementations of `UserenaBaseProfile` and `UserenaLanguageBaseProfile`
+- Replaces `userena.views.signout` with the class based `userena.views.SignoutView`
+- Adds request argument to `userena.backends.authenticate` 
+
+## Version 4.0.0
+
+- Drops support for Django 1.8
+- Fix security issue of leaking password reset token through the Referrer (bread-and-pepper/django-userena/548)
+- Removed deprecated `userena.utils.get_user_model()`
+
+## Version 3.1.0
+
+Added support for Django 1.11 and Django 2.0, dropped support for Django 1.9 
+and Django 1.10.
+
+This is the final release that will support Django 1.8.
+
+## Version 3.0.2
+
+Initial version of django-userena-ce that forks from django-userena. Note this
+still does not support Django > 1.9.
+
+Fixes and improvements:
+- Adds missing migration
+
+Backwards incompatible changes:
+- Now uses django-guardian >= 1.4.2. This means that settings.ANONYMOUS_USER_ID
+  is deprecated for settings.ANONYMOUS_USER_NAME.
+- Dropped support for Django < 1.8, Python2 < 2.7 and Python3 < 3.4.
+
+# django-userena history
+
 This file contains all the backwards-incompatible (since 1.0.1) and other
 significant (since 1.4.1) changes.
-
 
 ## Version 2.0.1
 
