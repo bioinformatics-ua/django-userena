@@ -484,7 +484,7 @@ def signin(request, auth_form=AuthenticationForm,
 
         'referal': referal,
         #'next': request.REQUEST.get(redirect_field_name),
-        'request': request
+        'request': request,
         'next': request.GET.get(redirect_field_name,
                                 request.POST.get(redirect_field_name)),
 
