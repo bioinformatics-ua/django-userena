@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from userena.utils import truncate_words
@@ -6,6 +7,8 @@ from userena.contrib.umessages.managers import (MessageManager, MessageContactMa
                                                 MessageRecipientManager)
 from userena.utils import user_model_label
 
+
+@python_2_unicode_compatible
 class MessageContact(models.Model):
     """
     Contact model.
@@ -15,13 +18,16 @@ class MessageContact(models.Model):
 
     """
     um_from_user = models.ForeignKey(user_model_label, verbose_name=_("from user"),
-                                  related_name=('um_from_users'))
+                                     related_name=('um_from_users'),
+                                     on_delete=models.CASCADE)
 
     um_to_user = models.ForeignKey(user_model_label, verbose_name=_("to user"),
-                                related_name=('um_to_users'))
+                                   related_name=('um_to_users'),
+                                   on_delete=models.CASCADE)
 
     latest_message = models.ForeignKey('Message',
-                                       verbose_name=_("latest message"))
+                                       verbose_name=_("latest message"),
+                                       on_delete=models.CASCADE)
 
     objects = MessageContactManager()
 
@@ -31,7 +37,7 @@ class MessageContact(models.Model):
         verbose_name = _("contact")
         verbose_name_plural = _("contacts")
 
-    def __unicode__(self):
+    def __str__(self):
         return (_("%(um_from_user)s and %(um_to_user)s")
                 % {'um_from_user': self.um_from_user.username,
                    'um_to_user': self.um_to_user.username})
@@ -51,6 +57,8 @@ class MessageContact(models.Model):
             return self.um_to_user
         else: return self.um_from_user
 
+
+@python_2_unicode_compatible
 class MessageRecipient(models.Model):
     """
     Intermediate model to allow per recipient marking as
@@ -58,10 +66,12 @@ class MessageRecipient(models.Model):
 
     """
     user = models.ForeignKey(user_model_label,
-                             verbose_name=_("recipient"))
+                             verbose_name=_("recipient"),
+                             on_delete=models.CASCADE)
 
     message = models.ForeignKey('Message',
-                                verbose_name=_("message"))
+                                verbose_name=_("message"),
+                                on_delete=models.CASCADE)
 
     read_at = models.DateTimeField(_("read at"),
                                    null=True,
@@ -77,7 +87,7 @@ class MessageRecipient(models.Model):
         verbose_name = _("recipient")
         verbose_name_plural = _("recipients")
 
-    def __unicode__(self):
+    def __str__(self):
         return (_("%(message)s")
                 % {'message': self.message})
 
@@ -85,13 +95,16 @@ class MessageRecipient(models.Model):
         """ Returns a boolean whether the recipient has read the message """
         return self.read_at is None
 
+
+@python_2_unicode_compatible
 class Message(models.Model):
     """ Private message model, from user to user(s) """
     body = models.TextField(_("body"))
 
     sender = models.ForeignKey(user_model_label,
                                related_name='sent_messages',
-                               verbose_name=_("sender"))
+                               verbose_name=_("sender"),
+                               on_delete=models.CASCADE)
 
     recipients = models.ManyToManyField(user_model_label,
                                         through='MessageRecipient',
@@ -112,7 +125,7 @@ class Message(models.Model):
         verbose_name = _("message")
         verbose_name_plural = _("messages")
 
-    def __unicode__(self):
+    def __str__(self):
         """ Human representation, displaying first ten words of the body. """
         truncated_body = truncate_words(self.body, 10)
         return "%(truncated_body)s" % {'truncated_body': truncated_body}

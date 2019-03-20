@@ -1,11 +1,14 @@
-from django.utils import translation
-from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-from django.contrib.auth.models import SiteProfileNotAvailable
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import translation
+from django.utils.deprecation import MiddlewareMixin
 
 from userena import settings as userena_settings
+from userena.compat import SiteProfileNotAvailable
+from userena.utils import get_user_profile
 
-class UserenaLocaleMiddleware(object):
+
+class UserenaLocaleMiddleware(MiddlewareMixin):
     """
     Set the language by looking at the language setting in the profile.
 
@@ -16,9 +19,12 @@ class UserenaLocaleMiddleware(object):
     def process_request(self, request):
         lang_cookie = request.session.get(settings.LANGUAGE_COOKIE_NAME)
         if not lang_cookie:
-            if request.user.is_authenticated():
+
+            authenticated = request.user.is_authenticated
+
+            if authenticated:
                 try:
-                    profile = request.user.get_profile()
+                    profile = get_user_profile(user=request.user)
                 except (ObjectDoesNotExist, SiteProfileNotAvailable):
                     profile = False
 

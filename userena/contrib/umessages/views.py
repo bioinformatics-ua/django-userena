@@ -1,17 +1,18 @@
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-from django.core.urlresolvers import reverse
-from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
-from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.views.decorators.http import require_http_methods
 from django.views.generic.list import ListView
 
-from userena.contrib.umessages.models import Message, MessageRecipient, MessageContact
-from userena.contrib.umessages.forms import ComposeForm
-from userena.utils import get_datetime_now, get_user_model
 from userena import settings as userena_settings
+from userena.contrib.umessages.forms import ComposeForm
+from userena.contrib.umessages.models import Message, MessageRecipient, MessageContact
+from userena.utils import get_datetime_now
 
 
 class MessageListView(ListView):
@@ -115,7 +116,8 @@ def message_compose(request, recipients=None, compose_form=ComposeForm,
     if request.method == "POST":
         form = compose_form(request.POST)
         if form.is_valid():
-            requested_redirect = request.REQUEST.get("next", False)
+            requested_redirect = request.GET.get(REDIRECT_FIELD_NAME,
+                                                 request.POST.get(REDIRECT_FIELD_NAME, False))
 
             message = form.save(request.user)
             recipients = form.cleaned_data['to']
@@ -123,9 +125,6 @@ def message_compose(request, recipients=None, compose_form=ComposeForm,
             if userena_settings.USERENA_USE_MESSAGES:
                 messages.success(request, _('Message is sent.'),
                                  fail_silently=True)
-
-            requested_redirect = request.REQUEST.get(REDIRECT_FIELD_NAME,
-                                                     False)
 
             # Redirect mechanism
             redirect_to = reverse('userena_umessages_list')
@@ -163,7 +162,8 @@ def message_remove(request, undo=False):
 
     """
     message_pks = request.POST.getlist('message_pks')
-    redirect_to = request.REQUEST.get('next', False)
+    redirect_to = request.GET.get(REDIRECT_FIELD_NAME,
+                                  request.POST.get(REDIRECT_FIELD_NAME, False))
 
     if message_pks:
         # Check that all values are integers.

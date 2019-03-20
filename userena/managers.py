@@ -1,19 +1,24 @@
 from django.db import models
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import UserManager, Permission, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
+from django.utils.encoding import smart_text
 from django.utils.translation import ugettext as _
 from django.conf import settings
+from django.utils.six import text_type
 
 from userena import settings as userena_settings
 from userena.utils import generate_sha1, get_profile_model, get_datetime_now, \
-    get_user_model
+    get_user_profile
 from userena import signals as userena_signals
 
 from guardian.shortcuts import assign_perm, get_perms
 
 
-import re, datetime
+
+import re
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
@@ -56,7 +61,6 @@ class UserenaManager(UserManager):
         :return: :class:`User` instance representing the new user.
 
         """
-        now = get_datetime_now()
 
         new_user = get_user_model().objects.create_user(
             username, email, password)
@@ -78,11 +82,13 @@ class UserenaManager(UserManager):
 
         # Give permissions to view and change profile
         for perm in ASSIGNED_PERMISSIONS['profile']:
-            assign_perm(perm[0], new_user, new_profile)
+            assign_perm(perm[0], new_user, get_user_profile(user=new_user))
 
         # Give permissions to view and change itself
         for perm in ASSIGNED_PERMISSIONS['user']:
             assign_perm(perm[0], new_user, new_user)
+
+        userena_profile = self.create_userena_profile(new_user)
 
         if send_email:
             if pending_activation:
@@ -102,12 +108,16 @@ class UserenaManager(UserManager):
         :return: The newly created :class:`UserenaSignup` instance.
 
         """
-        if isinstance(user.username, unicode):
-            user.username = user.username.encode('utf-8')
+        if isinstance(user.username, text_type):
+            user.username = smart_text(user.username)
         salt, activation_key = generate_sha1(user.username)
 
-        return self.create(user=user,
+        try:
+            profile = self.get(user=user)
+        except self.model.DoesNotExist:
+            profile = self.create(user=user,
                            activation_key=activation_key)
+        return profile
 
     def reissue_activation(self, activation_key):
         """
@@ -168,6 +178,21 @@ class UserenaManager(UserManager):
 
                 return user
         return False
+
+    def check_expired_activation(self, activation_key):
+        """
+        Check if ``activation_key`` is still valid.
+        Raises a ``self.model.DoesNotExist`` exception if key is not present or
+         ``activation_key`` is not a valid string
+        :param activation_key:
+            String containing the secret SHA1 for a valid activation.
+        :return:
+            True if the ket has expired, False if still valid.
+        """
+        if SHA1_RE.search(activation_key):
+            userena = self.get(activation_key=activation_key)
+            return userena.activation_key_expired()
+        raise self.model.DoesNotExist
 
     def reject_user(self, activation_key):
 
@@ -273,12 +298,12 @@ class UserenaManager(UserManager):
                                               codename=perm[0],
                                               content_type=model_content_type)
 
-        # it is safe to rely on settings.ANONYMOUS_USER_ID since it is a
+        # it is safe to rely on settings.ANONYMOUS_USER_NAME since it is a
         # requirement of django-guardian
-        for user in get_user_model().objects.exclude(id=settings.ANONYMOUS_USER_ID):
+        for user in get_user_model().objects.exclude(username=settings.ANONYMOUS_USER_NAME):
             try:
-                user_profile = user.get_profile()
-            except get_profile_model().DoesNotExist:
+                user_profile = get_user_profile(user=user)
+            except ObjectDoesNotExist:
                 warnings.append(_("No profile found for %(username)s") \
                                     % {'username': user.username})
             else:
@@ -286,7 +311,7 @@ class UserenaManager(UserManager):
 
                 for model, perms in ASSIGNED_PERMISSIONS.items():
                     if model == 'profile':
-                        perm_object = user.get_profile()
+                        perm_object = get_user_profile(user=user)
                     else: perm_object = user
 
                     for perm in perms:

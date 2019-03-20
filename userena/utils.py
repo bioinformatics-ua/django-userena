@@ -1,26 +1,26 @@
-from django.conf import settings
-from django.contrib.auth.models import SiteProfileNotAvailable
-from django.db.models import get_model
+import datetime
+import random
+from hashlib import sha1, md5
 
-try:
-    from hashlib import sha1 as sha_constructor, md5 as md5_constructor
-except ImportError:
-    from django.utils.hashcompat import sha_constructor, md5_constructor
+from django.apps import apps
+from django.conf import settings
+from django.utils.encoding import smart_bytes
+from django.utils.functional import keep_lazy_text
+from django.utils.http import urlencode
+from django.utils.six import text_type
+from django.utils.text import Truncator
 
 from userena import settings as userena_settings
+from userena.compat import SiteProfileNotAvailable
 
-import urllib, random, datetime
 
-try:
-    from django.utils.text import truncate_words
-except ImportError:
-    # Django >=1.5
-    from django.utils.text import Truncator
-    from django.utils.functional import allow_lazy
-    def truncate_words(s, num, end_text='...'):
-        truncate = end_text and ' %s' % end_text or ''
-        return Truncator(s).words(num, truncate=truncate)
-    truncate_words = allow_lazy(truncate_words, unicode)
+def truncate_words(s, num, end_text='...'):
+    truncate = end_text and ' %s' % end_text or ''
+    return Truncator(s).words(num, truncate=truncate)
+
+
+truncate_words = keep_lazy_text(truncate_words)
+
 
 def get_gravatar(email, size=80, default='identicon'):
     """ Get's a Gravatar for a email address.
@@ -60,10 +60,12 @@ def get_gravatar(email, size=80, default='identicon'):
 
     gravatar_url = '%(base_url)s%(gravatar_id)s?' % \
             {'base_url': base_url,
-             'gravatar_id': md5_constructor(email.lower()).hexdigest()}
+             'gravatar_id': md5(email.lower().encode('utf-8')).hexdigest()}
 
-    gravatar_url += urllib.urlencode({'s': str(size),
-                                      'd': default})
+    gravatar_url += urlencode({
+        's': str(size),
+        'd': default
+    })
     return gravatar_url
 
 def signin_redirect(redirect=None, user=None):
@@ -106,15 +108,16 @@ def generate_sha1(string, salt=None):
     :return: Tuple containing the salt and hash.
 
     """
-    if not isinstance(string, (str, unicode)):
+    if not isinstance(string, (str, text_type)):
         string = str(string)
-    if isinstance(string, unicode):
-        string = string.encode("utf-8")
-    if not salt:
-        salt = sha_constructor(str(random.random())).hexdigest()[:5]
-    hash = sha_constructor(salt+string).hexdigest()
 
-    return (salt, hash)
+    if not salt:
+        salt = sha1(str(random.random()).encode('utf-8')).hexdigest()[:5]
+
+    salted_bytes = (smart_bytes(salt) + smart_bytes(string))
+    hash_ = sha1(salted_bytes).hexdigest()
+
+    return salt, hash_
 
 def get_profile_model():
     """
@@ -128,10 +131,28 @@ def get_profile_model():
            (not settings.AUTH_PROFILE_MODULE):
         raise SiteProfileNotAvailable
 
-    profile_mod = get_model(*settings.AUTH_PROFILE_MODULE.rsplit('.',1))
+    try:
+        profile_mod = apps.get_model(*settings.AUTH_PROFILE_MODULE.rsplit('.', 1))
+    except LookupError:
+        profile_mod = None
+
     if profile_mod is None:
         raise SiteProfileNotAvailable
     return profile_mod
+
+def get_user_profile(user):
+    profile_model = get_profile_model()
+    try:
+        profile = user.get_profile()
+    except AttributeError:
+        related_name = profile_model._meta.get_field('user')\
+                                    .related_query_name()
+        profile = getattr(user, related_name, None)
+    except profile_model.DoesNotExist:
+        profile = None
+    if profile:
+        return profile
+    return profile_model.objects.create(user=user)
 
 def get_protocol():
     """
@@ -142,7 +163,7 @@ def get_protocol():
 
     """
     protocol = 'http'
-    if userena_settings.USERENA_USE_HTTPS:
+    if getattr(settings, 'USERENA_USE_HTTPS', userena_settings.DEFAULT_USERENA_USE_HTTPS):
         protocol = 'https'
     return protocol
 
@@ -168,9 +189,3 @@ def get_datetime_now():
 # to get_user_model deferred to execution time
 
 user_model_label = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
-
-try:
-    from django.contrib.auth import get_user_model
-except ImportError:
-    from django.contrib.auth.models import User
-    get_user_model = lambda: User

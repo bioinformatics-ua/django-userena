@@ -91,7 +91,6 @@ form. First you override the signup form and add the fields.
 
     from django import forms
     from django.utils.translation import ugettext_lazy as _
-
     from userena.forms import SignupForm
 
     class SignupFormExtra(SignupForm):
@@ -118,10 +117,10 @@ form. First you override the signup form and add the fields.
             """
             super(SignupFormExtra, self).__init__(*args, **kw)
             # Put the first and last name at the top
-            new_order = self.fields.keyOrder[:-2]
-            new_order.insert(0, 'first_name')
-            new_order.insert(1, 'last_name')
-            self.fields.keyOrder = new_order
+            new_order = self.fields
+            new_order.move_to_end('last_name', last=False)
+            new_order.move_to_end('first_name', last=False)
+            self.fields= new_order
 
         def save(self):
             """
@@ -132,9 +131,14 @@ form. First you override the signup form and add the fields.
             # First save the parent form and get the user.
             new_user = super(SignupFormExtra, self).save()
 
-            new_user.first_name = self.cleaned_data['first_name']
-            new_user.last_name = self.cleaned_data['last_name']
-            new_user.save()
+            # Get the profile, the `save` method above creates a profile for each
+            # user because it calls the manager method `create_user`.
+            # See: https://github.com/django-userena-ce/django-userena-ce/blob/master/userena/managers.py#L65
+            user_profile = new_user.my_profile
+
+            user_profile.first_name = self.cleaned_data['first_name']
+            user_profile.last_name = self.cleaned_data['last_name']
+            user_profile.save()
 
             # Userena expects to get the new user from this form, so return the new
             # user.

@@ -1,18 +1,18 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.forms import widgets
 from django.utils.translation import ugettext_lazy as _
 
-from userena.utils import get_user_model
 
 class CommaSeparatedUserInput(widgets.Input):
     input_type = 'text'
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         if value is None:
             value = ''
         elif isinstance(value, (list, tuple)):
             value = (', '.join([user.username for user in value]))
-        return super(CommaSeparatedUserInput, self).render(name, value, attrs)
+        return super(CommaSeparatedUserInput, self).render(name, value, attrs, renderer)
 
 class CommaSeparatedUserField(forms.Field):
     """

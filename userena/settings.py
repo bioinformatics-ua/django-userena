@@ -3,6 +3,8 @@
 # Please consult the docs for more information about each setting.
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+
 gettext = lambda s: s
 
 
@@ -55,10 +57,12 @@ USERENA_FORBIDDEN_USERNAMES = getattr(settings,
                                       'USERENA_FORBIDDEN_USERNAMES',
                                       ('signup', 'signout', 'signin',
                                        'activate', 'me', 'password'))
+DEFAULT_USERENA_USE_HTTPS = False
 
-USERENA_USE_HTTPS = getattr(settings,
-                            'USERENA_USE_HTTPS',
-                            False)
+# NOTE: It is only for internal use. All those settings should be refactored to only defaults
+#       as specified in #452
+_USERENA_USE_HTTPS = getattr(settings, 'USERENA_USE_HTTPS', DEFAULT_USERENA_USE_HTTPS)
+
 
 USERENA_MUGSHOT_GRAVATAR = getattr(settings,
                                    'USERENA_MUGSHOT_GRAVATAR',
@@ -66,7 +70,7 @@ USERENA_MUGSHOT_GRAVATAR = getattr(settings,
 
 USERENA_MUGSHOT_GRAVATAR_SECURE = getattr(settings,
                                           'USERENA_MUGSHOT_GRAVATAR_SECURE',
-                                          USERENA_USE_HTTPS)
+                                          _USERENA_USE_HTTPS)
 
 USERENA_MUGSHOT_DEFAULT = getattr(settings,
                                   'USERENA_MUGSHOT_DEFAULT',
@@ -127,3 +131,12 @@ USERENA_USE_PLAIN_TEMPLATE = getattr(settings, 'USERENA_USE_PLAIN_TEMPLATE', not
 USERENA_REGISTER_PROFILE = getattr(settings, 'USERENA_REGISTER_PROFILE', True)
 
 USERENA_REGISTER_USER = getattr(settings, 'USERENA_REGISTER_USER', True)
+
+if hasattr(settings, 'ANONYMOUS_USER_ID'):
+    raise ImproperlyConfigured('settings.ANONYMOUS_USER_ID is deprecated for settings.ANONYMOUS_USER_NAME. See https://django-guardian.readthedocs.io/en/stable/configuration.html')
+
+try:
+    if settings.ANONYMOUS_USER_NAME == None:
+        raise ImproperlyConfigured('settings.ANONYMOUS_USER_NAME must not be None.')
+except AttributeError:
+    raise ImproperlyConfigured('ANONYMOUS_USER_NAME must be set in settings. See https://django-guardian.readthedocs.io/en/stable/configuration.html')

@@ -7,6 +7,7 @@ build
 .Python
 
 # Virtual environment
+venv/
 bin/
 lib/
 lib64
@@ -35,3 +36,10 @@ demo/media/admin
 
 # Temp vim files
 *.swp
+
+# Backup files
+*~
+
+# Pycharm 
+.idea/
+

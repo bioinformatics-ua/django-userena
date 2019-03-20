@@ -6,8 +6,8 @@
 Userena Introduction
 ====================
 
-This documentation covers 1.2.2 release of django-userena application. A Django
-application that takes care of your account needs.
+This documentation covers |release| release of django-userena-ce application.
+A Django application that takes care of your account needs.
 
 Why userena?
 ================
@@ -41,6 +41,17 @@ Help out
 
 Found a bug in userena? File an issue at Github. Have an improvement? Fork it
 and add it, or if you can't code it, contact us to do it.
+
+
+Changes and releases
+====================
+
+For changes history and available releases see following pages on GitHub
+repository:
+
+* `UDATES.md <https://github.com/django-userena-ce/django-userena-ce/blob/master/UPDATES.md>`_
+* `releases <https://github.com/django-userena-ce/django-userena-ce/releases>`_
+
 
 Contents
 ========

@@ -4,20 +4,23 @@ Installation.
 =============
 
 Before install django-userena, you'll need to have a copy of `Django
-<http://www.djangoproject.com>`_ 1.2 or newer installed.
+<http://www.djangoproject.com>`_ 1.11, 2.1 or 2.2 installed. django-userena is
+tested under Python 2.7, 3.4, 3.5, 3.6, 3.7 (all versions on which
+Django 1.11 and higher is declared to work)
 
 For further information, consult the `Django download page
 <http://www.djangoproject.com/download/>`_, which offers convenient packaged
 downloads and installation instructions.
 
-warning::
-   
-   django-userena has not been tested on Python3 yet.
+Support for Django versions below 1.11
+--------------------------------------
 
-Installing django-userena.
---------------------------
+From version 4.0.0 only django versions 1.11, 2.1 and 2.2 will be supported.
 
-You can install django-userena automagicly with ``pip``. Or by manually
+Installing django-userena-ce
+----------------------------
+
+You can install django-userena automagically with ``pip``. Or by manually
 placing it on on your ``PYTHON_PATH``. The recommended way is the shown in
 :ref:`pip-install`.
 
@@ -35,19 +38,19 @@ Automatic install with `pip
 <http://www.pip-installer.org/en/latest/index.html>`_. All you have to do is
 run the following command::
 
-    pip install django-userena
+    pip install django-userena-ce
 
 If you want to have a specific version of userena, you can do so by adding the
 following::
 
-    pip install django-userena==1.0.1
+    pip install django-userena-ce==4.0.0
 
 Manual installation with easy_install.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Clone the Git repository from Github. Then you can direct easy_install to the
 ``setup.py`` file. For ex.::
 
-    git clone git://github.com/bread-and-pepper/django-userena.git
+    git clone git://github.com/django-userena-ce/django-userena-ce.git
     cd django-userena
     easy_install setup.py
 
@@ -58,7 +61,7 @@ Automatic installation of development version with pip.
 You can tell `pip`_ to install django-userena by supplying it with the git
 repository on Github. Do this by typing the following in your terminal::
 
-    pip install -e git+git://github.com/bread-and-pepper/django-userena.git#egg=userena
+    pip install -e git+git://github.com/django-userena-ce/django-userena-ce.git#egg=userena
 
 
 Manual installation of development version with git.
@@ -66,7 +69,7 @@ Manual installation of development version with git.
 
 Clone userena with::
     
-    git clone git://github.com/bread-and-pepper/django-userena.git
+    git clone git://github.com/django-userena-ce/django-userena-ce.git
 
 You now have a directory ``django-userena`` which contains the ``userena``
 application. You can add userena to your ``$PYTHONPATH`` by symlinking it. For
@@ -86,6 +89,8 @@ your project. This means modifying ``AUTHENTICATION_BACKENDS``,
 
 Begin by adding ``userena``, ``guardian`` and ``easy_thumbnails`` to the
 ``INSTALLED_APPS`` in your settings.py file of your project.
+``django.contrib.sites`` must also be present if it is not already (see `Django docs
+<https://docs.djangoproject.com/en/1.11/ref/contrib/sites/>`_.).
 
 Next add ``UserenaAuthenticationBackend`` and ``ObjectPermissionBackend`` 
 also in your settings.py file, from django-guardian, at the top of ``AUTHENTICATION_BACKENDS``. 
@@ -197,15 +202,15 @@ This should have you a working accounts application for your project. See the
 Required settings
 ~~~~~~~~~~~~~~~~~
 
-Django-guardian requires you to set the ``ANONYMOUS_USER_ID`` setting. I always
-set this to ``-1``. As noted before, you are also required to set the
+Django-guardian requires you to set the ``ANONYMOUS_USER_NAME`` setting.
+As noted before, you are also required to set the
 ``AUTH_PROFILE_MODULE`` to your custom defined profile.
 
 For example, add the following into your settings.py file:
 
 .. code-block:: python
 
-    ANONYMOUS_USER_ID = -1
+    ANONYMOUS_USER_NAME = 'AnonymousUser'
 
     AUTH_PROFILE_MODULE = 'accounts.MyProfile'
 
@@ -215,7 +220,7 @@ under ``accounts``:
 
 .. code-block:: python
 
-    LOGIN_REDIRECT_URL = '/accounts/%(username)s/'
+    USERENA_SIGNIN_REDIRECT_URL = '/accounts/%(username)s/'
     LOGIN_URL = '/accounts/signin/'
     LOGOUT_URL = '/accounts/signout/'
 
@@ -248,3 +253,15 @@ model. To check if all permissions are there, run the ``check_permissions`` in
 the management :ref:`commands`.
 
 .. _Github: https://github.com/lukaszb/django-guardian
+
+Migrating from bread-and-pepper/django-userena
+==============================================
+
+This project was forked from bread-and-pepper/django-userena v2.0.1. 
+To migrate from this project you just need to install the package
+and update a key which was changed in django-guardian:
+
+1. Remove django-userena-ce from your installation
+2. `pip install django-userena-ce==3.1.0`
+3. Update your django settings, remove `ANONYMOUS_USER_ID` and set `ANONYMOUS_USER_NAME`
+

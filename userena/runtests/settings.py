@@ -1,8 +1,8 @@
 # Django settings for Userena demo project.
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 import os
+
 settings_dir = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.abspath(settings_dir)
 
@@ -68,13 +68,30 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '_g-js)o8z#8=9pr1&amp;05h^1_#)91sbo-)g^(*=-+epxmt4kc9m#'
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            # insert your TEMPLATE_DIRS here
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
+                # list if you haven't customized them:
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -100,12 +117,8 @@ AUTH_PROFILE_MODULE = 'profiles.Profile'
 USERENA_DISABLE_PROFILE_LIST = True
 USERENA_MUGSHOT_SIZE = 140
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'userena.runtests.urls'
 WSGI_APPLICATION = 'demo.wsgi.application'
-
-TEMPLATE_DIRS = (
-    os.path.join(PROJECT_ROOT, 'templates/'),
-)
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -117,11 +130,12 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'guardian',
-    'south',
     'userena',
     'userena.contrib.umessages',
     'userena.tests.profiles',
 )
+
+INSTALLED_APPS += ('easy_thumbnails',)
 
 LOGGING = {
     'version': 1,
@@ -147,8 +161,6 @@ LOGGING = {
     }
 }
 
-# Needed for Django guardian
-ANONYMOUS_USER_ID = -1
+ANONYMOUS_USER_NAME = "AnonymousUser"
 
-# Test runner
-TEST_RUNNER = 'django_coverage.coverage_runner.CoverageRunner'
+USERENA_USE_HTTPS = False

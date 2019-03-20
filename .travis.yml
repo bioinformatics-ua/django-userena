@@ -1,13 +1,36 @@
 language: python
-python: 2.7
-env:
-  - TOX_ENV=py2.6-django1.6.1
-  - TOX_ENV=py2.7-django1.6.1
-  - TOX_ENV=py2.6-django1.5.5
-  - TOX_ENV=py2.7-django1.5.5
-  - TOX_ENV=py2.6-django1.4.10
-  - TOX_ENV=py2.7-django1.4.10
-install:
-  - pip install tox
-script:
-  - tox -e $TOX_ENV
+
+dist: xenial
+
+matrix:
+  include:
+    - python: 2.7
+    - python: 3.4
+    - python: 3.5
+    - python: 3.6
+    # Workaround for enabling python 3.7 in travis
+    # See https://github.com/travis-ci/travis-ci/issues/9815
+    - python: 3.7
+      sudo: true
+
+before_install:
+  # Upgrade sqlite3 as this is broken with django 2.2
+  - sudo apt-get autoremove sqlite3
+  - sudo add-apt-repository -y ppa:jonathonf/backports
+  - sudo apt-get update
+  - sudo apt-get install sqlite3
+
+install: pip install -U tox-travis
+
+script: tox
+
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: jamesmeakin
+  password:
+    secure: Fh0pb66Euqcl/gPJiNfOzNflJFWO6blKuJXsgbzFI8WXOil0bN6x5l3ijVhWE8Tno7wzWjEkc6F03xMs6jkwd2vEGH3LOm1FZavKJxJpQwzYIWmT9zJjbHozSVI9rmD8hEsvcetE1O6soNXd5NsZVjqvy1sl1MolfncvMtkH9glhYmOVJK76D14IN87QjgF4vaNLnnCotf6CTvaUW+sXFx4Etu56YJBjLeNgVQYE3jZD8OgB/adhyG2JJKpbGujMkkZDjWo8/e3AWC+FZr7z6lfByb1PSUykCwUDMVw80evjmoXVeXwGqc1F8X1bG2IzCUw+DZ6/m6+9eTO7gedfSVA1aO0uu0VsIesf0Fcoquaoe9pkRsXhqzQ7LO8jnaWPFCJinbGzclWCwGsYj5W/MLFebo12HljiTOxvI0DWA1v9cuJP6ZJ+UhqOkiMOl0GR5281eJ+L3RY+wvARe2dsqR59sG12LlFJi2lSBfGfEWVb0rlIyQiw7rRVySJz+vxaK32LhP89iPaDyQDX6XNYF7tEpqll0Hm5xpaneQ0UjMoR7VCFJHynZj1x/V0ILUVC1z4O3elRdfPyL96Dsnclcl+ker/iGyDCwrn69VcHAIiMUKmMTJKCYllZG65h7HF7IlrI+bE0Wa05623cu7xRUIRMDXwmWd9DOxxIfPg2tYM=
+  on:
+    tags: true
+    repo: django-userena-ce/django-userena-ce
+    python: 3.6

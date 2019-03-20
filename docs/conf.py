@@ -42,7 +42,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'django-userena'
+project = u'django-userena-ce'
 copyright = u'2010, 2011 Bread & Pepper'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -177,8 +177,8 @@ htmlhelp_basename = 'userenadoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Userena.tex', u'Userena Documentation',
-   u'Petar Radosevic', 'manual'),
+  ('index', 'Userena.tex', 'Userena Documentation',
+   'Petar Radosevic', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
