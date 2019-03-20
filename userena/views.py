@@ -478,7 +478,7 @@ def signin(request, auth_form=AuthenticationForm,
                 if remember_me:
                     request.session.set_expiry(userena_settings.USERENA_REMEMBER_ME_DAYS[1] * 86400)
                 else:
-                    request.session.set_expiry(settings.SESSION_IDLE_TIMEOUT)
+                    request.session.set_expiry(0)
 
                 if userena_settings.USERENA_USE_MESSAGES:
                     messages.success(request, _('You have been signed in.'),
