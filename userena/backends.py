@@ -44,4 +44,4 @@ class UserenaAuthenticationBackend(ModelBackend):
         User = get_user_model()
         try: return User.objects.get(pk=user_id)
         except User.DoesNotExist:
-        return None
+            return None
