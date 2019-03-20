@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models import Q
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import UserManager, Permission, AnonymousUser
@@ -180,6 +179,21 @@ class UserenaManager(UserManager):
                 return user
         return False
 
+    def check_expired_activation(self, activation_key):
+        """
+        Check if ``activation_key`` is still valid.
+        Raises a ``self.model.DoesNotExist`` exception if key is not present or
+         ``activation_key`` is not a valid string
+        :param activation_key:
+            String containing the secret SHA1 for a valid activation.
+        :return:
+            True if the ket has expired, False if still valid.
+        """
+        if SHA1_RE.search(activation_key):
+            userena = self.get(activation_key=activation_key)
+            return userena.activation_key_expired()
+        raise self.model.DoesNotExist
+
     def reject_user(self, activation_key):
 
         if SHA1_RE.search(activation_key):
@@ -288,7 +302,6 @@ class UserenaManager(UserManager):
         # requirement of django-guardian
         for user in get_user_model().objects.exclude(username=settings.ANONYMOUS_USER_NAME):
             try:
-
                 user_profile = get_user_profile(user=user)
             except ObjectDoesNotExist:
                 warnings.append(_("No profile found for %(username)s") \

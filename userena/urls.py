@@ -46,6 +46,13 @@ urlpatterns = [
         name='userena_password_reset_complete'),
 
     # Signup
+    # url(r'^(?P<username>[\.\w-]+)/signup/complete/$',
+    #    userena_views.direct_to_user_template,
+    #    {'template_name': 'userena/signup_complete.html',
+    #     'extra_context': {'userena_activation_required': userena_settings.USERENA_ACTIVATION_REQUIRED,
+    #                       'userena_activation_days': userena_settings.USERENA_ACTIVATION_DAYS}},
+    #    name='userena_signup_complete'),
+
 
 
     # Activate
