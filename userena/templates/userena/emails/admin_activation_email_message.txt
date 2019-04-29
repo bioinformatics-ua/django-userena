@@ -1,4 +1,4 @@
-{% load i18n %}{% autoescape off %}{% load url from future %}
+{% load i18n %}{% autoescape off %}
 {% blocktrans with site.name as site %}A new user has been registered at {{ site }}.{% endblocktrans %}
 
 {% blocktrans with user.username as username %}Username: {{ username }} {% endblocktrans %}

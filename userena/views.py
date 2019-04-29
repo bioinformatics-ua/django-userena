@@ -145,7 +145,8 @@ def signup(request, signup_form=SignupForm,
             if success_url and not userena_settings.USERENA_MODERATE_REGISTRATION:
                 redirect_to = success_url
             else:
-                redirect_to = reverse('userena_signup_complete')
+                redirect_to = reverse('userena_signup_complete',
+                                            kwargs = {'username': user.username})
 
             if user and not userena_settings.USERENA_MODERATE_REGISTRATION:
                 # A new signed user should logout the old one.

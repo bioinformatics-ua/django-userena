@@ -15,6 +15,8 @@ from userena.utils import get_gravatar, generate_sha1, get_protocol, \
 import datetime
 from .mail import UserenaConfirmationMail
 
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
 
 PROFILE_PERMISSIONS = (
             ('view_profile', 'Can view profile'),
@@ -295,15 +297,15 @@ class UserenaSignup(models.Model):
             emaillist.append(self.user.email)
 
 
-        message = render_to_string('userena/emails/admin_activation_email_message.txt',
-                                   context)
         if userena_settings.USERENA_HTML_EMAIL:
-            message_html = render_to_string('userena/emails/admin_activation_email_message.html',
+            message = render_to_string('userena/emails/admin_activation_email_message.html',
                                    context)
+        else:
+            message = render_to_string('userena/emails/admin_activation_email_message.txt',
+                                       context)
 
         send_mail(settings.SITE_NAME + "- Pending activation",
                   message,
-                  message_html,
                   settings.DEFAULT_FROM_EMAIL,
                   emaillist)
 

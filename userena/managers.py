@@ -74,7 +74,7 @@ class UserenaManager(UserManager):
         # All users have an empty profile
         profile_model = get_profile_model()
         try:
-            new_profile = new_user.get_profile()
+            new_profile = new_user.emif_profile
 
         except profile_model.DoesNotExist:
             new_profile = profile_model(user=new_user)
