@@ -297,17 +297,23 @@ class UserenaSignup(models.Model):
             emaillist.append(self.user.email)
 
 
+        message = render_to_string('userena/emails/admin_activation_email_message.txt',
+                                   context)
         if userena_settings.USERENA_HTML_EMAIL:
-            message = render_to_string('userena/emails/admin_activation_email_message.html',
+            message_html = render_to_string('userena/emails/admin_activation_email_message.html',
                                    context)
         else:
-            message = render_to_string('userena/emails/admin_activation_email_message.txt',
-                                       context)
+            message_html = None
 
         send_mail(settings.SITE_NAME + "- Pending activation",
                   message,
                   settings.DEFAULT_FROM_EMAIL,
-                  emaillist)
+                  emaillist,
+                  None,
+                  None,
+                  None,
+                  None,
+                  message_html)
 
 @python_2_unicode_compatible
 class UserenaBaseProfile(models.Model):
